@@ -11,7 +11,25 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:text="Hello World!"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Dungeon Fall"
+        android:id="@+id/textView"
+        android:layout_marginTop="126dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="35sp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Play"
+        android:id="@+id/button"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="103dp"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp"
+        android:textSize="20sp"/>
 </RelativeLayout>
