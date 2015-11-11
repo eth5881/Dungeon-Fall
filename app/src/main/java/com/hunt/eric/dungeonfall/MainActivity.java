@@ -2,14 +2,21 @@ package com.hunt.eric.dungeonfall;
 
 import android.app.Activity;
 import android.content.Intent;
+<<<<<<< HEAD
 import android.content.SharedPreferences;
+=======
+>>>>>>> bf5af08837ffd79b97c7dee3c4a7f637123b7a5f
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+<<<<<<< HEAD
 public class MainActivity extends Activity implements View.OnClickListener{
+=======
+public class MainActivity extends Activity implements  View.OnClickListener {
+>>>>>>> bf5af08837ffd79b97c7dee3c4a7f637123b7a5f
 
     // This is the entry point to our game
     @Override
@@ -20,6 +27,7 @@ public class MainActivity extends Activity implements View.OnClickListener{
         setContentView(R.layout.activity_main);
 
         // Get a reference to the button in our layout
+<<<<<<< HEAD
         final Button buttonPlay =
                 (Button)findViewById(R.id.play_button);
         // Listen for clicks
@@ -64,5 +72,17 @@ public class MainActivity extends Activity implements View.OnClickListener{
                             | View.SYSTEM_UI_FLAG_FULLSCREEN
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
+=======
+        final Button buttonPlay = (Button) findViewById(R.id.play_button);
+        // Get a reference to the TextView in our layout
+        // Listen for clicks
+        buttonPlay.setOnClickListener(this);
+    }
+    @Override
+    public void onClick(View v) {
+        Intent i = new Intent(this, GameActivity.class);
+        startActivity(i);
+        finish();
+>>>>>>> bf5af08837ffd79b97c7dee3c4a7f637123b7a5f
     }
 }
