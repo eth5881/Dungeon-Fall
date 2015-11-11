@@ -7,18 +7,11 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-<<<<<<< HEAD
         android:theme="@style/Theme.AppCompat.NoActionBar" >
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
-=======
-        android:theme="@style/AppTheme" >
-        <activity android:name=".MainActivity"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="portrait">
->>>>>>> bf5af08837ffd79b97c7dee3c4a7f637123b7a5f
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,13 +20,8 @@
         </activity>
         <activity
             android:name=".GameActivity"
-<<<<<<< HEAD
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
-=======
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            android:screenOrientation="portrait">
->>>>>>> bf5af08837ffd79b97c7dee3c4a7f637123b7a5f
         </activity>
     </application>
 

@@ -23,8 +23,8 @@ public class Hero {
 
     // Constructor
     public Hero(Context context, int screenX, int screenY) {
-        x = 50;
-        y = 50;
+        x = 100;
+        y = 100;
 
         health = 4;
         bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);

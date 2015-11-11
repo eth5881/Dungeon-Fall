@@ -25,7 +25,7 @@ public class Enemy{
     private Rect hitBox;
 
     // Constructor
-    public Enemy(Context context, int x, int y, int width, int height, int fps, int frameCount) {
+    public Enemy(Context context, int x, int y, int width, int height, int fps, int frameCount, Bitmap img) {
         /*Random generator = new Random();
         int whichBitmap = generator.nextInt(3);
         switch (whichBitmap){
@@ -42,20 +42,20 @@ public class Enemy{
                 break;
         }*/
 
-        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.bat);
-        resizedBitmap = Bitmap.createScaledBitmap(bitmap, 150 * 3, 100, false);
+        bitmap = img;
+        //resizedBitmap = Bitmap.createScaledBitmap(bitmap, 150 * 3, 100, false);
         this.x = x;
         this.y = y;
         currentFrame = 0;
         frameNr = frameCount;
-        spriteWidth = resizedBitmap.getWidth() / frameCount;
-        spriteHeight = resizedBitmap.getHeight();
+        spriteWidth = bitmap.getWidth() / frameCount;
+        spriteHeight = bitmap.getHeight();
         sourceRect = new Rect(0, 0, spriteWidth, spriteHeight);
         framePeriod = 1000 / fps;
         frameTicker = 0l;
 
         // Initialize the hit box
-        hitBox = new Rect(x, y, resizedBitmap.getWidth(), resizedBitmap.getHeight());
+        hitBox = new Rect(x, y, bitmap.getWidth(), bitmap.getHeight());
 
     }
 
@@ -75,20 +75,20 @@ public class Enemy{
         // Refresh hit box location
         hitBox.left = x;
         hitBox.top = y;
-        hitBox.right = x + resizedBitmap.getWidth();
-        hitBox.bottom = y + resizedBitmap.getHeight();
+        hitBox.right = x + bitmap.getWidth();
+        hitBox.bottom = y + bitmap.getHeight();
     }
 
     public void draw(Canvas canvas) {
         // where to draw the sprite
         Rect destRect = new Rect(getX(), getY(), getX() + spriteWidth, getY() + spriteHeight);
-        canvas.drawBitmap(resizedBitmap, sourceRect, destRect, null);
+        canvas.drawBitmap(bitmap, sourceRect, destRect, null);
     }
 
     //Getters and Setters
     public Bitmap getBitmap(){
 
-        return resizedBitmap;
+        return bitmap;
     }
     public int getX() {
 

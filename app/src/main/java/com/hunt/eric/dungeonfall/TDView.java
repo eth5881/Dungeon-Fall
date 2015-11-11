@@ -21,10 +21,8 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- * Created by Shawn on 11/10/2015.
- */
     public class TDView extends SurfaceView implements Runnable {
+
         volatile boolean playing;
         Thread gameThread = null;
         private Paint paint;
@@ -36,11 +34,17 @@ import java.util.Random;
         private Context context;
         private boolean gameEnded;
         private Bitmap mBackground;
+        private Bitmap resizedBg;
         private Bitmap hearts;
-        private Bitmap coins;
-        private Bitmap enemy ;
+        private Bitmap gold;
+        private Enemy coin1;
+        private Enemy coin2;
+        private Enemy coin3;
+        private Enemy enemy1;
+        private Enemy enemy2;
+        private Enemy enemy3;
         private Array enemies;
-        private Bitmap player;
+        private Hero hero;
         private Bitmap powerups;
         private Bitmap powerups2;
         private int numbCoins;
@@ -64,6 +68,15 @@ import java.util.Random;
         }
         private void startGame(){
 
+            hero = new Hero(context, screenX, screenY);
+
+            enemy1 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 30, 47, 15, 3, BitmapFactory.decodeResource(context.getResources(), R.drawable.bat));
+            enemy2 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 30, 47, 15, 3, BitmapFactory.decodeResource(context.getResources(), R.drawable.bat));
+            enemy3 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 30, 47, 15, 3, BitmapFactory.decodeResource(context.getResources(), R.drawable.bat));
+            coin1 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 32, 32, 15, 8, BitmapFactory.decodeResource(context.getResources(), R.drawable.gold));
+            coin2 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 32, 32, 15, 8, BitmapFactory.decodeResource(context.getResources(), R.drawable.gold));
+            coin3 = new Enemy(context, (int)(Math.random()*screenX), (int)(Math.random()*screenY), 32, 32, 15, 8, BitmapFactory.decodeResource(context.getResources(), R.drawable.gold));
+
             numbCoins = 100;
             level = 22;
             exp = 22;
@@ -81,16 +94,24 @@ import java.util.Random;
             }
         }
         private void update(){
+            enemy1.update(System.currentTimeMillis());
+            enemy2.update(System.currentTimeMillis());
+            enemy3.update(System.currentTimeMillis());
+
+            coin1.update(System.currentTimeMillis());
+            coin2.update(System.currentTimeMillis());
+            coin3.update(System.currentTimeMillis());
         }
         private void draw(){
             if (ourHolder.getSurface().isValid()) {
                 //First we lock the area of memory we will be drawing to
                 canvas = ourHolder.lockCanvas();
-                // set background to image and scale according to size of device
-                mBackground = BitmapFactory.decodeResource(context.getResources(), R.drawable.brown_bg);
-                canvas.drawBitmap(Bitmap.createScaledBitmap(mBackground,canvas.getWidth(),canvas.getHeight(),true),0,0,null);
                 paint.setColor(Color.argb(255, 255, 255, 255));
                 if(!gameEnded) {
+                    // set background to image and scale according to size of device
+                    mBackground = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
+                    resizedBg = Bitmap.createScaledBitmap(mBackground, screenX, screenY + 100, false);
+                    canvas.drawBitmap(resizedBg, 0, 0, paint);
                     // Draw the hud
                     paint.setTextAlign(Paint.Align.LEFT);
                     paint.setColor(Color.argb(255, 255, 255, 255));
@@ -101,17 +122,22 @@ import java.util.Random;
                     canvas.drawText("MP:", (screenX / 3) + 130, 55, paint);
 
                     hearts = BitmapFactory.decodeResource(context.getResources(), R.drawable.hearts);
-                    coins = BitmapFactory.decodeResource(context.getResources(), R.drawable.coin);
+                    gold = BitmapFactory.decodeResource(context.getResources(), R.drawable.coin);
                     powerups = BitmapFactory.decodeResource(context.getResources(), R.drawable.lightning);
                     powerups2 = BitmapFactory.decodeResource(context.getResources(), R.drawable.fireball);
-                    enemy = BitmapFactory.decodeResource(context.getResources(), R.drawable. bat);
-                    player = BitmapFactory.decodeResource(context.getResources(), R.drawable. hero2);
-
+                    // Draw the player and enemies
+                    canvas.drawBitmap(hero.getBitmap(), hero.getX(), hero.getY(), paint);
+                    enemy1.draw(canvas);
+                    enemy2.draw(canvas);
+                    enemy3.draw(canvas);
+                    coin1.draw(canvas);
+                    coin2.draw(canvas);
+                    coin3.draw(canvas);
 
                     // button
                     canvas.drawRect(screenY, 0, 10, 10, paint);
                     canvas.drawBitmap(hearts, 10, 20, paint);
-                    canvas.drawBitmap(coins, 150, 75, paint);
+                    canvas.drawBitmap(gold, 155, 78, paint);
                     canvas.drawText(String.valueOf(numbCoins), 205, 115, paint);
                     canvas.drawBitmap(powerups, 0, screenY - 100, paint);
                     canvas.drawBitmap(powerups2, screenX - 100, screenY - 100, paint);
@@ -137,19 +163,6 @@ import java.util.Random;
                         canvas.drawBitmap(clubs[i], i1, i2, paint);
 
                     }*/
-
-                    canvas.drawBitmap(enemy, screenX - 400, screenY - 200, paint);
-                    canvas.drawBitmap(enemy, screenX - 220, screenY - 500, paint);
-                    canvas.drawBitmap(enemy, 150, 250, paint);
-                    canvas.drawBitmap(coins, screenX - 210, screenY - 300, paint);
-                    canvas.drawBitmap(coins, 40, 200, paint);
-                    canvas.drawBitmap(coins,screenX - 300, 350, paint);
-                    canvas.drawBitmap(player,(screenX/2)-200,screenY/2, paint);
-
-
-
-
-
                 }
                 else{
 
