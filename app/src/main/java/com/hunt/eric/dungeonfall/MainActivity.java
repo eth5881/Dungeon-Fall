@@ -16,7 +16,7 @@ public class MainActivity extends Activity implements  View.OnClickListener {
         setContentView(R.layout.activity_main);
 
         // Get a reference to the button in our layout
-        final Button buttonPlay = (Button) findViewById(R.id.buttonPlay);
+        final Button buttonPlay = (Button) findViewById(R.id.play_button);
         // Get a reference to the TextView in our layout
         // Listen for clicks
         buttonPlay.setOnClickListener(this);
