@@ -18,10 +18,19 @@ android {
     }
     productFlavors {
     }
+    packagingOptions {
+        exclude 'lib/armeabi/libandengine.so'
+        exclude 'lib/armeabi-v7a/libandengine.so'
+        exclude 'lib/mips/libandengine.so'
+        exclude 'lib/x86/libandengine.so'
+    }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.0'
+    compile project(':andEnginePhysicsBox2DExtension')
+    compile project(':andEngine')
+
 }
