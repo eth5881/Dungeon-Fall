@@ -1,6 +1,5 @@
 package org.andengine.util.modifier.ease;
 
-
 /**
  * (c) 2010 Nicolas Gramlich
  * (c) 2011 Zynga Inc.
@@ -29,7 +28,7 @@ public class EaseCircularIn implements IEaseFunction {
 	}
 
 	public static EaseCircularIn getInstance() {
-		if (INSTANCE == null) {
+		if(INSTANCE == null) {
 			INSTANCE = new EaseCircularIn();
 		}
 		return INSTANCE;
@@ -53,7 +52,7 @@ public class EaseCircularIn implements IEaseFunction {
 	// ===========================================================
 
 	public static float getValue(final float pPercentage) {
-		return -((float) Math.sqrt(1 - pPercentage * pPercentage) - 1.0f);
+		return -((float)Math.sqrt(1 - pPercentage * pPercentage) - 1.0f);
 	}
 
 	// ===========================================================

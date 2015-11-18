@@ -1,21 +1,21 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "19.1.0"
+    compileSdkVersion 21
+    buildToolsVersion "21.1.0"
 
     defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 8
+        minSdkVersion 15
+        targetSdkVersion 21
 
         ndk {
             moduleName "andenginephysicsbox2dextension"
         }
     }
-
     sourceSets {
         main {
             jni.srcDirs = []
+            // This needs to be done so that gradle does not know about your jni. There are errors otherwise
         }
     }
 
@@ -25,6 +25,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
 }
 
 dependencies {

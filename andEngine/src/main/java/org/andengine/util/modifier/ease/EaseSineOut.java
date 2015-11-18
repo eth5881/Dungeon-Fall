@@ -30,7 +30,7 @@ public class EaseSineOut implements IEaseFunction {
 	}
 
 	public static EaseSineOut getInstance() {
-		if (INSTANCE == null) {
+		if(INSTANCE == null) {
 			INSTANCE = new EaseSineOut();
 		}
 		return INSTANCE;
@@ -54,7 +54,7 @@ public class EaseSineOut implements IEaseFunction {
 	// ===========================================================
 
 	public static float getValue(final float pPercentage) {
-		return (float) Math.sin(pPercentage * MathConstants.PI_HALF);
+		return (float)Math.sin(pPercentage * MathConstants.PI_HALF);
 	}
 
 	// ===========================================================

@@ -30,7 +30,7 @@ public class EaseElasticOut implements IEaseFunction {
 	}
 
 	public static EaseElasticOut getInstance() {
-		if (INSTANCE == null) {
+		if(INSTANCE == null) {
 			INSTANCE = new EaseElasticOut();
 		}
 		return INSTANCE;
@@ -54,17 +54,17 @@ public class EaseElasticOut implements IEaseFunction {
 	// ===========================================================
 
 	public static float getValue(final float pSecondsElapsed, final float pDuration, final float pPercentageDone) {
-		if (pSecondsElapsed == 0) {
+		if(pSecondsElapsed == 0) {
 			return 0;
 		}
-		if (pSecondsElapsed == pDuration) {
+		if(pSecondsElapsed == pDuration) {
 			return 1;
 		}
 
 		final float p = pDuration * 0.3f;
 		final float s = p / 4;
 
-		return 1 + (float) Math.pow(2, -10 * pPercentageDone) * (float) Math.sin((pPercentageDone * pDuration - s) * MathConstants.PI_TWICE / p);
+		return 1 + (float)Math.pow(2, -10 * pPercentageDone) * (float)Math.sin((pPercentageDone * pDuration - s) * MathConstants.PI_TWICE / p);
 	}
 
 	// ===========================================================
