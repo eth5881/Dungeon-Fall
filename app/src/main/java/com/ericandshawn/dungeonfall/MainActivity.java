@@ -1,6 +1,7 @@
 package com.ericandshawn.dungeonfall;
 
 import android.hardware.SensorManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
@@ -39,7 +41,7 @@ import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
 
-public class MainActivity extends BaseGameActivity implements IAccelerationListener, IOnSceneTouchListener {
+public class MainActivity extends BaseGameActivity implements IAccelerationListener {
     // ===========================================================
     // Constants
     // ===========================================================
@@ -68,6 +70,7 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
 
     private Sprite player;
     private Body playerBody;
+    private int accellerationSpeedX;
 
 
     // ===========================================================
@@ -75,20 +78,12 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
     // ===========================================================
 
     @Override
-    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
-        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX()*3, pAccelerationData.getY()*3);
-        this.mPhysicsWorld.setGravity(gravity);
-        Vector2Pool.recycle(gravity);
-    }
-
-    @Override
-    public void onAccelerationChanged(AccelerationData pAccelerationData) {
-
-    }
-
-    @Override
     public EngineOptions onCreateEngineOptions() {
         mCamera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        //mPhysicsWorld = new PhysicsWorld(new Vector2(0, SensorManager.GRAVITY_EARTH), false);
+        //mPhysicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, SensorManager.GRAVITY_EARTH),false);
+
+
         return new EngineOptions(true, ScreenOrientation.PORTRAIT_FIXED, new FillResolutionPolicy(), mCamera);
     }
 
@@ -114,12 +109,6 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
         super.onDestroy();
         System.exit(0);
     }
-    //IOnSceneTouchEvent
-    @Override
-    public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
-        return false;
-    }
-
     // If the player hits the back button, quit the app
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -143,6 +132,44 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
+    @Override
+    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
+        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH*1.5f);
+        //Log.d("MainActivity", "physics = " + mPhysicsWorld);
+        //get physics world from Game scene
+        // tried passing physics world from MainActivity to gameScene but didn't work(this is what's currently set up now)
+        // mPhysicsWorld = getPhysics();
+        mPhysicsWorld.setGravity(gravity);
+        Vector2Pool.recycle(gravity);
+    }
+
+    @Override
+    public void onAccelerationChanged(AccelerationData pAccelerationData) {
+         //accellerationSpeedX = (int)pAccelerationData.getX();
+
+        //   accellerometerSpeedY = (int)pAccelerometerData.getY();
+        Log.d("MainActivity", "Acclerometer = " + pAccelerationData);
+        //Log.d("MainActivity", "Acclerometer Speed = " + accellerationSpeedX);
+        //mySprite.setPosition(mySprite.getX() + myAccelerometerData.getX(), mySprite.getY() + myAccelerometerData.getY());
+
+    }
+    /*@Override
+    public void onResumeGame(){
+        super.onResumeGame();
+        this.enableAccelerationSensor(this);
+    }*/
+    /*@Override
+    public void onPauseGame() {
+        super.onPauseGame();
+        this.disableAccelerationSensor();
+    }*/
+    public void enableAccelerometer()
+    {
+        //only works with BaseGameActivity
+        enableAccelerationSensor(this);
+    }
+    public void disableAccelerometer(){ disableAccelerationSensor(); }
+
 
 
 

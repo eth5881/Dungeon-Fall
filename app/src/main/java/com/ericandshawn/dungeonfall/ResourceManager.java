@@ -2,6 +2,7 @@ package com.ericandshawn.dungeonfall;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
+import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -22,6 +23,7 @@ public class ResourceManager {
     public MainActivity activity;
     public Camera camera;
     public VertexBufferObjectManager vbom;
+
 
     //IMAGES
     protected ITextureRegion mBg;

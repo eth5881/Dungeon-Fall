@@ -58,7 +58,10 @@ public class SceneManager {
    }
     public void setGameScene(){
         ResourceManager.getInstance().loadGameResources();
-        gameScene = new GameScene();
+        gameScene = new GameScene(ResourceManager.getInstance().activity);
+        //adding Accelerometer through MainActivity
+        //ResourceManager.getInstance().activity.enableAccelerometer();
+        //gameScene.registerUpdateHandler(ResourceManager.getInstance().activity.mPhysicsWorld);
         setScene(gameScene);
         currentScene.createScene();
     }
