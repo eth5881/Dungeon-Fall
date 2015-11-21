@@ -145,7 +145,7 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
 
     @Override
     public void onAccelerationChanged(AccelerationData pAccelerationData) {
-         //accellerationSpeedX = (int)pAccelerationData.getX();
+        //accellerationSpeedX = (int)pAccelerationData.getX();
 
         //   accellerometerSpeedY = (int)pAccelerometerData.getY();
         Log.d("MainActivity", "Acclerometer = " + pAccelerationData);

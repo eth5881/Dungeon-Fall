@@ -35,9 +35,9 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
     private void createMenu(){
         menu = new MenuScene(camera);
         menu.setPosition(0,0);
+
         final IMenuItem playItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_PLAY,ResourceManager.getInstance().play_button_region,vbom),3.2f,1);
         final IMenuItem aboutItem = new ScaleMenuItemDecorator(new SpriteMenuItem(MENU_ABOUT,ResourceManager.getInstance().about_button_region,vbom),5.2f,1);
-
 
         menu.addMenuItem(playItem);
         menu.addMenuItem(aboutItem);
@@ -46,20 +46,19 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         //menu.setBackground(new Background(Color.GREEN));
         menu.setBackgroundEnabled(false);
         playItem.setPosition(playItem.getX(), playItem.getY() + 20);
+
         aboutItem.setPosition(aboutItem.getX(), aboutItem.getY() + 145);
 
         playItem.setScale(3,3);
         aboutItem.setScale(3,3);
 
         menu.setOnMenuItemClickListener(this);
-
         setChildScene(menu);
     }
     @Override
     public boolean onMenuItemClicked(MenuScene pMenuScene, IMenuItem pMenuItem, float pLocal, float pLocalY) {
         switch (pMenuItem.getID()){
             case MENU_PLAY:
-                //pMenuItem.setScale(3,3);
                 SceneManager.getInstance().setGameScene();
                 return true;
             case MENU_ABOUT:

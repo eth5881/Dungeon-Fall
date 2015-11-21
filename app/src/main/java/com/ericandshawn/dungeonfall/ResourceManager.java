@@ -24,7 +24,6 @@ public class ResourceManager {
     public Camera camera;
     public VertexBufferObjectManager vbom;
 
-
     //IMAGES
     protected ITextureRegion mBg;
     private BitmapTextureAtlas mBitmapTextureAtlas;
