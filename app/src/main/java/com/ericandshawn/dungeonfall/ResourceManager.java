@@ -11,6 +11,7 @@ import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSourc
 import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
 import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder;
 import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.debug.Debug;
 
@@ -25,17 +26,22 @@ public class ResourceManager {
     public VertexBufferObjectManager vbom;
 
     //IMAGES
-    protected ITextureRegion mBg;
+
     private BitmapTextureAtlas mBitmapTextureAtlas;
     private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
 
     public ITextureRegion menu_background_region;
+    protected ITextureRegion game_background_region;
     public ITextureRegion play_button_region;
     public ITextureRegion about_button_region;
 
     private BuildableBitmapTextureAtlas menuTextureAtlas;
     private BuildableBitmapTextureAtlas gameTextureAtlas;
-    public ITextureRegion player_region;
+    protected ITextureRegion player_region;
+    protected ITiledTextureRegion bat_region;
+    protected ITiledTextureRegion gold_region;
+    protected ITextureRegion platform_region;
+    protected ITextureRegion spikedPlatform_region;
 
 
 
@@ -54,19 +60,9 @@ public class ResourceManager {
     private void loadMenuGraphics()
     {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-
-        //setup random background
-        int bg = (int)(Math.round(Math.random()*8));
-        if(bg == 0){
-            bg = 8;
-        }
-        mBackgroundBitmapTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
-        mBg = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBackgroundBitmapTextureAtlas, activity, "" + bg + ".png", 0, 0);
-        mBackgroundBitmapTextureAtlas.load();
-
         //menuTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
         menuTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),512, 512, TextureOptions.BILINEAR);
-        menu_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "" + bg + ".png");
+        menu_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "1.png");
         play_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "play.png");
         about_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "continue.png");
 
@@ -88,8 +84,28 @@ public class ResourceManager {
 
     private void loadGameGraphics()
     {
+
+        //setup random background
+        int bg = (int)(Math.round(Math.random()*8));
+        if(bg == 0){
+            bg = 8;
+        }
+        mBackgroundBitmapTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
+        game_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBackgroundBitmapTextureAtlas, activity, "" + bg + ".png", 0, 0);
+        mBackgroundBitmapTextureAtlas.load();
+
+
         gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),512, 512, TextureOptions.BILINEAR);
         player_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "hero.png");
+        bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png",3,1);
+        gold_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "gold.png",8,1);
+        platform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform.png");
+        spikedPlatform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "stakes.png");
+
+        //mBat = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, activity, "bat.png", 35, 0, 3, 1);
+        //mGold = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, activity, "gold.png", 185, 0, 8, 1);
+        //mPlatform = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas, activity, "platform.png", 0, 51);
+        //mSpikedPlatform = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas, activity, "stakes.png", 71, 51);
         try
         {
             this.gameTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,1,0));

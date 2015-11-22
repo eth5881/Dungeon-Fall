@@ -5,6 +5,7 @@ import org.andengine.entity.scene.menu.MenuScene;
 import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ScaleMenuItemDecorator;
+import org.andengine.entity.sprite.Sprite;
 import org.andengine.util.color.Color;
 
 /**
@@ -15,10 +16,18 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
     private MenuScene menu;
     private  final int MENU_PLAY = 0;
     private  final int MENU_ABOUT = 1;
+
+    private Sprite menuBg;
     @Override
     public void createScene() {
-        setBackground(new Background(Color.GREEN));
+        createBackground();
         createMenu();
+    }
+
+    private void createBackground() {
+        menuBg = new Sprite(MainActivity.CAMERA_WIDTH/2-135, MainActivity.CAMERA_HEIGHT/2-240, ResourceManager.getInstance().menu_background_region, vbom);
+        menuBg.setScale(4, 4);
+        attachChild(menuBg);
     }
 
     @Override
@@ -50,7 +59,7 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         aboutItem.setPosition(aboutItem.getX(), aboutItem.getY() + 145);
 
         playItem.setScale(3,3);
-        aboutItem.setScale(3,3);
+        aboutItem.setScale(3, 3);
 
         menu.setOnMenuItemClickListener(this);
         setChildScene(menu);

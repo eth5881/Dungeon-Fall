@@ -41,7 +41,7 @@ import org.andengine.ui.activity.BaseGameActivity;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
 
-public class MainActivity extends BaseGameActivity implements IAccelerationListener {
+public class MainActivity extends BaseGameActivity {
     // ===========================================================
     // Constants
     // ===========================================================
@@ -132,6 +132,7 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
+    /*
     @Override
     public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
         final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH*1.5f);
@@ -142,7 +143,6 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
         mPhysicsWorld.setGravity(gravity);
         Vector2Pool.recycle(gravity);
     }
-
     @Override
     public void onAccelerationChanged(AccelerationData pAccelerationData) {
         //accellerationSpeedX = (int)pAccelerationData.getX();
@@ -153,7 +153,15 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
         //mySprite.setPosition(mySprite.getX() + myAccelerometerData.getX(), mySprite.getY() + myAccelerometerData.getY());
 
     }
-    /*@Override
+    public void enableAccelerometer()
+    {
+        //only works with BaseGameActivity
+        enableAccelerationSensor(this);
+    }
+    public void disableAccelerometer(){ disableAccelerationSensor(); }
+    */
+
+     /*@Override
     public void onResumeGame(){
         super.onResumeGame();
         this.enableAccelerationSensor(this);
@@ -163,13 +171,6 @@ public class MainActivity extends BaseGameActivity implements IAccelerationListe
         super.onPauseGame();
         this.disableAccelerationSensor();
     }*/
-    public void enableAccelerometer()
-    {
-        //only works with BaseGameActivity
-        enableAccelerationSensor(this);
-    }
-    public void disableAccelerometer(){ disableAccelerationSensor(); }
-
 
 
 
