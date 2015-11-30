@@ -15,6 +15,8 @@ import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.entity.text.TextOptions;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.FixedStepPhysicsWorld;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
@@ -26,6 +28,7 @@ import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
 /**
@@ -53,6 +56,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     private AnimatedSprite gold;
     private Body goldBody;
+
+    private int floor;
+    private int numbCoins;
+    private long exp;
+    private long level;
 
     @Override
     public void createScene() {
@@ -102,8 +110,45 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         //setBackground(new Background(Color.BLUE));
     }
     private void createHUD(){
+
+        numbCoins = 100;
+        level = 22;
+        exp = 22;
+        floor = 22;
+
         gameHUD = new HUD();
+        // Draw the hud
+        Text levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
+        //levelText.setColor(Color.BLACK);
+        levelText.setPosition(MainActivity.CAMERA_WIDTH/2 + 190, 115);
+        attachChild(levelText);
+
+        Text floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
+        floorText.setPosition(10, 115);
+        attachChild(floorText);
+
+        Text expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
+        expText.setPosition(MainActivity.CAMERA_WIDTH - 130, 115);
+        attachChild(expText);
+
+        Text mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+        mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 130, 55);
+        attachChild(mpText);
+
+        Text coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(numbCoins), new TextOptions(HorizontalAlign.LEFT), vbom);
+        coinText.setPosition(205, 115);
+        attachChild(coinText);
+
+        //paint.setTextSize(35);
+        //canvas.drawText("Level: " + level, (screenX / 3) + 190, 115, paint);
+        //canvas.drawText("Floor: " + floor, 10, 115, paint);
+        //canvas.drawText("Exp: " + exp, screenX - 130, 115, paint);
+        //canvas.drawText("MP:", (screenX / 3) + 130, 55, paint);
+        //canvas.drawText(String.valueOf(numbCoins), 205, 115, paint);
+
         camera.setHUD(gameHUD);
+
+
     }
     private void addPlayer(final float pX, final float pY) {
 
@@ -171,16 +216,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     @Override
     public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
-        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH * 1.5f);
-        mPhysicsWorld.setGravity(gravity);
-        Vector2Pool.recycle(gravity);
-        //playerBody.applyForce(new Vector2(pAccelerationData.getX(), 0),playerBody.getWorldCenter());
 
     }
 
     @Override
     public void onAccelerationChanged(AccelerationData pAccelerationData) {
        // Log.d("GameScene", "Acclerometer = " + pAccelerationData);
+        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH * 1.5f);
+        mPhysicsWorld.setGravity(gravity);
+        Vector2Pool.recycle(gravity);
+        //playerBody.applyForce(new Vector2(pAccelerationData.getX(), 0),playerBody.getWorldCenter());
     }
     //Enable Accelerometer through MainActivity
     public GameScene(MainActivity object) {

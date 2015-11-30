@@ -1,8 +1,13 @@
 package com.ericandshawn.dungeonfall;
 
+import android.graphics.Typeface;
+
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.FontFactory;
+import org.andengine.opengl.texture.ITexture;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -13,6 +18,7 @@ import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
 
 /**
@@ -29,6 +35,7 @@ public class ResourceManager {
 
     private BitmapTextureAtlas mBitmapTextureAtlas;
     private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
+    private BitmapTextureAtlas mHudBitmapTextureAtlas;
 
     public ITextureRegion menu_background_region;
     protected ITextureRegion game_background_region;
@@ -37,11 +44,23 @@ public class ResourceManager {
 
     private BuildableBitmapTextureAtlas menuTextureAtlas;
     private BuildableBitmapTextureAtlas gameTextureAtlas;
+    private BuildableBitmapTextureAtlas hudTextureAtlas;
     protected ITextureRegion player_region;
     protected ITiledTextureRegion bat_region;
     protected ITiledTextureRegion gold_region;
     protected ITextureRegion platform_region;
     protected ITextureRegion spikedPlatform_region;
+    protected ITextureRegion lives_region;
+    protected ITextureRegion mp_region;
+    protected ITextureRegion store_region;
+
+    //FONTS
+
+    protected ITexture mainFontTexture;
+    protected Font menuNameFont;
+    protected ITexture hudFontTexture;
+    protected Font hudNameFont;
+
 
 
 
@@ -50,10 +69,12 @@ public class ResourceManager {
     {
         loadMenuGraphics();
         loadMenuAudio();
+        loadGameFonts();
     }
     public void loadGameResources()
     {
         loadGameGraphics();
+        loadHudGraphics();
         loadGameFonts();
         loadGameAudio();
     }
@@ -80,6 +101,13 @@ public class ResourceManager {
     private void loadMenuAudio()
     {
 
+    }
+    private void loadHudGraphics(){
+        hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
+        lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "heartSheet.png",5,1);
+        mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "mpSheet.png",4,1);
+        store_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "restart.png");
+        hudTextureAtlas.load();
     }
 
     private void loadGameGraphics()
@@ -119,7 +147,19 @@ public class ResourceManager {
 
     private void loadGameFonts()
     {
+        mainFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        //font = FontFactory.createStrokeFromAsset(activity.getFontManager(), mainFontTexture, activity.getAssets(), "font.ttf", 50, true, Color.WHITE, 2, Color.BLACK);
+        //menuNameFont = FontFactory.create(activity.getFontManager(), activity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 16, Color.BLACK);
+        menuNameFont = FontFactory.create(activity.getFontManager(),mainFontTexture,120,Color.WHITE_ARGB_PACKED_INT);
 
+        menuNameFont.load();
+
+        hudFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+        //font = FontFactory.createStrokeFromAsset(activity.getFontManager(), mainFontTexture, activity.getAssets(), "font.ttf", 50, true, Color.WHITE, 2, Color.BLACK);
+        //menuNameFont = FontFactory.create(activity.getFontManager(), activity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 16, Color.BLACK);
+        hudNameFont = FontFactory.create(activity.getFontManager(),hudFontTexture,35,Color.WHITE_ABGR_PACKED_INT);
+
+        hudNameFont.load();
     }
 
     private void loadGameAudio()

@@ -6,6 +6,9 @@ import org.andengine.entity.scene.menu.item.IMenuItem;
 import org.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.andengine.entity.scene.menu.item.decorator.ScaleMenuItemDecorator;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.entity.text.Text;
+import org.andengine.entity.text.TextOptions;
+import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
 /**
@@ -28,6 +31,11 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         menuBg = new Sprite(MainActivity.CAMERA_WIDTH/2-135, MainActivity.CAMERA_HEIGHT/2-240, ResourceManager.getInstance().menu_background_region, vbom);
         menuBg.setScale(4, 4);
         attachChild(menuBg);
+
+        Text nameText = new Text(0, 0, ResourceManager.getInstance().menuNameFont, "Dungeon Drop", new TextOptions(HorizontalAlign.LEFT), vbom);
+        nameText.setColor(Color.WHITE);
+        nameText.setPosition((MainActivity.CAMERA_WIDTH - nameText.getWidth())/2f, 120);
+        attachChild(nameText);
     }
 
     @Override
