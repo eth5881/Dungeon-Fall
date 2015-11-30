@@ -33,9 +33,7 @@ public class ResourceManager {
 
     //IMAGES
 
-    private BitmapTextureAtlas mBitmapTextureAtlas;
     private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
-    private BitmapTextureAtlas mHudBitmapTextureAtlas;
 
     public ITextureRegion menu_background_region;
     protected ITextureRegion game_background_region;
@@ -50,9 +48,11 @@ public class ResourceManager {
     protected ITiledTextureRegion gold_region;
     protected ITextureRegion platform_region;
     protected ITextureRegion spikedPlatform_region;
-    protected ITextureRegion lives_region;
-    protected ITextureRegion mp_region;
+    protected ITiledTextureRegion lives_region;
+    protected ITiledTextureRegion mp_region;
     protected ITextureRegion store_region;
+    protected ITextureRegion goldHud_region;
+
 
     //FONTS
 
@@ -103,11 +103,22 @@ public class ResourceManager {
 
     }
     private void loadHudGraphics(){
-        hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
-        lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "heartSheet.png",5,1);
-        mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "mpSheet.png",4,1);
-        store_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "restart.png");
-        hudTextureAtlas.load();
+        hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
+        lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "heartSheet.png",5,1);
+        mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "mpSheet.png", 4, 1);
+        store_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "restart.png");
+        goldHud_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "goldHud.png");
+        //this.hudTextureAtlas.load();
+
+        try
+        {
+            this.hudTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 0));
+            this.hudTextureAtlas.load();
+        }
+        catch (final ITextureAtlasBuilder.TextureAtlasBuilderException e)
+        {
+            Debug.e(e);
+        }
     }
 
     private void loadGameGraphics()

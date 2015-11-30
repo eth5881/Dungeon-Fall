@@ -57,6 +57,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private AnimatedSprite gold;
     private Body goldBody;
 
+
+    //HUD Sprites
+    private Sprite mStore;
+    private Sprite mGoldHud;
+    private AnimatedSprite mMp;
+    private AnimatedSprite mLives;
+
+
     private int floor;
     private int numbCoins;
     private long exp;
@@ -111,33 +119,59 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     }
     private void createHUD(){
 
-        numbCoins = 100;
-        level = 22;
-        exp = 22;
-        floor = 22;
+        numbCoins = 10;
+        level = 1;
+        exp = 0;
+        floor = 1;
 
         gameHUD = new HUD();
         // Draw the hud
         Text levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
         //levelText.setColor(Color.BLACK);
-        levelText.setPosition(MainActivity.CAMERA_WIDTH/2 + 190, 115);
+        levelText.setPosition(MainActivity.CAMERA_WIDTH/2 + 220, 115);
         attachChild(levelText);
 
         Text floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
-        floorText.setPosition(10, 115);
+        floorText.setPosition(20, 115);
         attachChild(floorText);
 
         Text expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
-        expText.setPosition(MainActivity.CAMERA_WIDTH - 130, 115);
+        expText.setPosition(MainActivity.CAMERA_WIDTH - 150, 115);
         attachChild(expText);
 
         Text mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
-        mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 130, 55);
+        mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 150,35);
         attachChild(mpText);
 
         Text coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(numbCoins), new TextOptions(HorizontalAlign.LEFT), vbom);
-        coinText.setPosition(205, 115);
+        coinText.setPosition(270, 115);
         attachChild(coinText);
+
+        mGoldHud = createSprite(220, 120, ResourceManager.getInstance().goldHud_region, vbom);
+        mGoldHud.setScale(3, 3);
+        attachChild(mGoldHud);
+
+        mStore = createSprite(95, MainActivity.CAMERA_HEIGHT -70, ResourceManager.getInstance().store_region, vbom);
+        mStore.setScale(3, 3);
+        attachChild(mStore);
+
+        mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH/2 + 350,  40, ResourceManager.getInstance().mp_region, vbom);
+        mMp.setScale(3, 3);
+        attachChild(mMp);
+
+        mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
+        mLives.setScale(3, 3);
+        attachChild(mLives);
+
+
+        //canvas.drawRect(screenY, 0, 10, 10, paint);
+        //canvas.drawBitmap(hearts, 10, 20, paint);
+        //canvas.drawBitmap(gold, 155, 78, paint);
+        //canvas.drawText(String.valueOf(numbCoins), 205, 115, paint);
+        //canvas.drawBitmap(powerups, 0, screenY - 100, paint);
+        //canvas.drawBitmap(powerups2, screenX - 100, screenY - 100, paint);
+        //canvas.drawRect((screenX / 3) + 200, 18, screenX - 10, 70, paint);
+
 
         //paint.setTextSize(35);
         //canvas.drawText("Level: " + level, (screenX / 3) + 190, 115, paint);
