@@ -6,9 +6,15 @@ import android.util.Log;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Manifold;
 
 import org.andengine.engine.camera.hud.HUD;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
@@ -27,10 +33,12 @@ import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.input.sensor.acceleration.AccelerationData;
 import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.texture.region.ITextureRegion;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
+
+import java.util.ArrayList;
 
 /**
  * Created by Shawn on 11/18/2015.
@@ -42,21 +50,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     private Sprite player;
     private Body playerBody;
-    protected ITextureRegion mPlayer;
 
     private Sprite mBg;
 
-    private Sprite platform;
-    private Body platformBody;
+    private ArrayList<Coin> coinList;
+    private ArrayList<Enemy> enemyList;
 
-    private AnimatedSprite bat;
-    private Body batBody;
-
-    private Sprite stakes;
-    private Body stakesBody;
-
-    private AnimatedSprite gold;
-    private Body goldBody;
+    private boolean playerDrop = false;
 
 
     //HUD Sprites
@@ -65,11 +65,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private AnimatedSprite mMp;
     private AnimatedSprite mLives;
 
+    Text coinText;
 
     private int floor;
-    protected int numbCoins;
+
+    private int goldAmount;
     private long exp;
     private long level;
+    private int lives;
+    private int mp;
 
     private Scene mStoreScene;
     @Override
@@ -77,7 +81,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
         createHUD();
         createPhysics();
-        //addPlayer(50, 0);
         addFloorItems();
         setOnSceneTouchListener(this);
         //camera.setChaseEntity(player);
@@ -92,37 +95,151 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     @Override
     public void disposeScene() {
         ResourceManager.getInstance().unloadGameResources();
-        //ResourceManager.getInstance().activity.disableAccelerometer();
     }
     private void createPhysics() {
         registerUpdateHandler(new FPSLogger());
         mPhysicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, SensorManager.GRAVITY_EARTH),false);
-        //mPhysicsWorld = ResourceManager.getInstance().activity.mPhysicsWorld;
-        registerUpdateHandler(mPhysicsWorld);
+        mPhysicsWorld.setContactListener(createContactListener());
 
         //making sure hero doesn't go off screen
         final Rectangle left = new Rectangle(0, 0, 0, MainActivity.CAMERA_HEIGHT, vbom);
         final Rectangle right = new Rectangle(MainActivity.CAMERA_WIDTH, 0, 2, MainActivity.CAMERA_HEIGHT, vbom);
 
         final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
-        PhysicsFactory.createBoxBody(this.mPhysicsWorld, left, BodyDef.BodyType.StaticBody, wallFixtureDef);
-        PhysicsFactory.createBoxBody(this.mPhysicsWorld, right, BodyDef.BodyType.StaticBody, wallFixtureDef);
+        PhysicsFactory.createBoxBody(mPhysicsWorld, left, BodyDef.BodyType.StaticBody, wallFixtureDef);
+        PhysicsFactory.createBoxBody(mPhysicsWorld, right, BodyDef.BodyType.StaticBody, wallFixtureDef);
 
         attachChild(left);
         attachChild(right);
 
+        registerUpdateHandler(mPhysicsWorld);
+        registerUpdateHandler(new IUpdateHandler() {
+            public void reset() {
+            }
+
+            public void onUpdate(float pSecondsElapsed) {
+                //Game loop
+                if (player != null) {
+                    //if hero leaves the screen, detach sprite from scene and destroy body
+                    if (player.getY() > MainActivity.CAMERA_HEIGHT) {
+                        mPhysicsWorld.destroyBody(playerBody);
+                        player.detachSelf();
+                        player.dispose();
+                        player = null;
+                        playerDrop = false;
+                    }
+                    //set user data for enemies
+                    for (int i = 0; i < enemyList.size(); i++) {
+                        String batString = "bat" + i;
+                        enemyList.get(i).body.setUserData(batString);
+                    }
+                    //set user data for coins
+                    for (int j = 0; j < coinList.size(); j++) {
+                        String coinString = "coin" + j;
+                        coinList.get(j).body.setUserData(coinString);
+                    }
+                }
+            }
+        });
+    }
+    private ContactListener createContactListener()
+    {
+        ContactListener contactListener = new ContactListener()
+        {
+            @Override
+            public void beginContact(Contact contact)
+            {
+                final Fixture x1 = contact.getFixtureA();
+                final Fixture x2 = contact.getFixtureB();
+                final Body body1 = x1.getBody();
+                final Body body2 = x2.getBody();
+
+                //check if player and coin collide
+                for(int i=0;i<coinList.size();i++) {
+                    String coinData = "coin" + i;
+                    if(("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
+                        //collect coin and add it to gold amount
+                        destroyCoin(coinList.get(i));
+                        goldAmount = goldAmount + Math.round((int)(Math.random() * 25));
+                        //coinText.setText(String.valueOf(goldAmount));
+                    }
+                }
+            }
+
+            @Override
+            public void endContact(Contact contact)
+            {
+                final Fixture x1 = contact.getFixtureA();
+                final Fixture x2 = contact.getFixtureB();
+                final Body body1 = x1.getBody();
+                final Body body2 = x2.getBody();
+
+                //check if player and enemy collide
+                for(int i=0;i<enemyList.size();i++) {
+                    String batData = "bat" + i;
+                    if(("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
+                        //kill enemy and add experience
+                        destroyEnemy(enemyList.get(i));
+                    }
+                }
+            }
+
+            @Override
+            public void preSolve(Contact contact, Manifold oldManifold)
+            {
+
+            }
+
+            @Override
+            public void postSolve(Contact contact, ContactImpulse impulse)
+            {
+
+            }
+        };
+        return contactListener;
+    }
+
+    @Override
+    public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
+        if (mPhysicsWorld != null) {
+            if (pSceneTouchEvent.isActionDown() && !playerDrop) {
+                addPlayer(pSceneTouchEvent.getX(), -150);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
+    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
 
     }
+
+    @Override
+    public void onAccelerationChanged(AccelerationData pAccelerationData) {
+        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH * 1.5f);
+        mPhysicsWorld.setGravity(gravity);
+        Vector2Pool.recycle(gravity);
+    }
+    //Enable Accelerometer through MainActivity
+    public GameScene(MainActivity object) {
+        object.getEngine().enableAccelerationSensor(object,this);
+    }
+
+    // ===========================================================
+    // Methods
+    // ===========================================================
+
     private void setBackground(final float pX, final float pY){
-        //final Sprite background;
         mBg = createSprite(pX, pY, ResourceManager.getInstance().game_background_region, vbom);
         mBg.setScale(4, 4);
         attachChild(mBg);
-        //setBackground(new Background(Color.BLUE));
     }
     private void createHUD(){
 
-        numbCoins = 0;
+
+        goldAmount = 0;
         level = 1;
         exp = 0;
         floor = 1;
@@ -146,7 +263,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 150,35);
         attachChild(mpText);
 
-        Text coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(numbCoins), new TextOptions(HorizontalAlign.LEFT), vbom);
+        coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), new TextOptions(HorizontalAlign.LEFT), vbom);
         coinText.setPosition(270, 115);
         attachChild(coinText);
 
@@ -183,75 +300,55 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mLives.setScale(3, 3);
         attachChild(mLives);
 
-
-        //canvas.drawRect(screenY, 0, 10, 10, paint);
-        //canvas.drawBitmap(hearts, 10, 20, paint);
-        //canvas.drawBitmap(gold, 155, 78, paint);
-        //canvas.drawText(String.valueOf(numbCoins), 205, 115, paint);
-        //canvas.drawBitmap(powerups, 0, screenY - 100, paint);
-        //canvas.drawBitmap(powerups2, screenX - 100, screenY - 100, paint);
-        //canvas.drawRect((screenX / 3) + 200, 18, screenX - 10, 70, paint);
-
-
-        //paint.setTextSize(35);
-        //canvas.drawText("Level: " + level, (screenX / 3) + 190, 115, paint);
-        //canvas.drawText("Floor: " + floor, 10, 115, paint);
-        //canvas.drawText("Exp: " + exp, screenX - 130, 115, paint);
-        //canvas.drawText("MP:", (screenX / 3) + 130, 55, paint);
-        //canvas.drawText(String.valueOf(numbCoins), 205, 115, paint);
-
         camera.setHUD(gameHUD);
-
-
     }
-    private void addPlayer(final float pX, final float pY) {
 
+    private void addPlayer(final float pX, final float pY) {
         final FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(1, 0.7f, 0.3f);
 
-        player = createSprite(pX, pY, ResourceManager.getInstance().player_region, vbom);
-        player.setScale(3, 3);
+        playerDrop = true;
+        player = new Sprite(pX, pY, ResourceManager.getInstance().player_region, vbom);
+        player.setScale(3,3);
         playerBody = PhysicsFactory.createBoxBody(mPhysicsWorld, player, BodyDef.BodyType.DynamicBody, objectFixtureDef);
-
-        //Sprite, body, updatePosition, updateRotation
-        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(player, playerBody, true, true));
+        playerBody.setUserData("player");
 
         attachChild(player);
+        mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(player, playerBody, true, true));
     }
 
     private void addFloorItems(){
         final FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(1, 0, 0.3f);
-
+        coinList = new ArrayList<>();
+        enemyList = new ArrayList<>();
         for(int i=0;i<12;i++){
-            if (Math.random() < 0.6) {
+            if (Math.random() < 0.5) {
                 //add bat
-                bat = createAnimatedSprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().bat_region, vbom);
-                bat.setScale(3, 3);
-                batBody = PhysicsFactory.createCircleBody(mPhysicsWorld, bat, BodyDef.BodyType.StaticBody, objectFixtureDef);
-                bat.animate(100);
-                attachChild(bat);
-                this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(bat, batBody, true, true));
-            } else if (Math.round(Math.random() * 10) >= 9) {
+                enemyList.add(new Enemy((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().bat_region, vbom, mPhysicsWorld, this, null, 3, 3, 100));
+            } else if (Math.round(Math.random() * 10) >= 8) {
                 //add platform
-                platform = createSprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().platform_region, vbom);
+                final Sprite platform;
+                final Body platformBody;
+
+                platform = new Sprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().platform_region, vbom);
                 platform.setScale(3, 3);
-                platformBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, platform, BodyDef.BodyType.StaticBody, objectFixtureDef);
+                platformBody = PhysicsFactory.createBoxBody(mPhysicsWorld, platform, BodyDef.BodyType.StaticBody, objectFixtureDef);
+
                 attachChild(platform);
                 mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(platform, platformBody, true, true));
-            } else if (Math.round(Math.random() * 10) == 10) {
+            } else if (Math.round(Math.random() * 10) >= 9) {
                 //add platform with stakes
-                stakes = createSprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().spikedPlatform_region, vbom);
+                final Sprite stakes;
+                final Body stakesBody;
+
+                stakes = new Sprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().spikedPlatform_region, vbom);
                 stakes.setScale(3, 3);
-                stakesBody = PhysicsFactory.createBoxBody(this.mPhysicsWorld, stakes, BodyDef.BodyType.StaticBody, objectFixtureDef);
+                stakesBody = PhysicsFactory.createBoxBody(mPhysicsWorld, stakes, BodyDef.BodyType.StaticBody, objectFixtureDef);
+
                 attachChild(stakes);
-                this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(stakes, stakesBody, true, true));
+                mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(stakes, stakesBody, true, true));
             } else {
                 //add gold
-                gold = createAnimatedSprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().gold_region, vbom);
-                gold.setScale(3, 3);
-                goldBody = PhysicsFactory.createCircleBody(this.mPhysicsWorld, gold, BodyDef.BodyType.StaticBody, objectFixtureDef);
-                gold.animate(100);
-                attachChild(gold);
-                this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(gold, goldBody, true, true));
+                coinList.add(new Coin((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().gold_region, vbom, mPhysicsWorld, this, null, 3, 3, 100));
             }
         }
     }
@@ -273,8 +370,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
                 //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
-                numbCoins+=10;
-                Log.d("GameScene", "numbCoins = " + numbCoins);
                 clearChildScene();
                 //activity.enableAccelerometer();
                 //engine.enableAccelerationSensor(MainActivity,this);
@@ -292,8 +387,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
                  //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
-                numbCoins+=10;
-                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //goldAmount+=10;
+                //Log.d("GameScene", "numbCoins = " + goldAmount);
                 //engine.start();
                 return true;
             }
@@ -308,8 +403,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
                 //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
-                numbCoins+=10;
-                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //goldAmount+=10;
+                //Log.d("GameScene", "numbCoins = " + goldAmount);
                 //engine.start();
                 return true;
             }
@@ -324,8 +419,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
                 //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
-                numbCoins+=10;
-                Log.d("GameScene", "numbCoins = " + numbCoins);
+                lives += 1;
+                //Log.d("GameScene", "numbCoins = " + lives);
                 //engine.start();
                 return true;
             }
@@ -340,8 +435,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
                 //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
-                numbCoins+=10;
-                Log.d("GameScene", "numbCoins = " + numbCoins);
+                mp+=1;
+                Log.d("GameScene", "mp = " + mp);
                 //engine.start();
                 return true;
             }
@@ -354,34 +449,35 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     }
 
-    @Override
-    public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
-        if (mPhysicsWorld != null) {
-            if (pSceneTouchEvent.isActionDown()) {
-                addPlayer(pSceneTouchEvent.getX(), -150);
-                return true;
+    private void destroyEnemy(final Enemy enemy)
+    {
+        activity.runOnUpdateThread(new Runnable() {
+
+            @Override
+            public void run() {
+                final Body body = enemy.body;
+                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(enemy));
+                mPhysicsWorld.destroyBody(body);
+                detachChild(enemy);
+                enemyList.remove(enemy);
             }
-        }
-        return false;
+        });
     }
 
+    private void destroyCoin(final Coin coin)
+    {
+        activity.runOnUpdateThread(new Runnable() {
 
-    @Override
-    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
-
-    }
-
-    @Override
-    public void onAccelerationChanged(AccelerationData pAccelerationData) {
-       // Log.d("GameScene", "Acclerometer = " + pAccelerationData);
-        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH * 1.5f);
-        mPhysicsWorld.setGravity(gravity);
-        Vector2Pool.recycle(gravity);
-        //playerBody.applyForce(new Vector2(pAccelerationData.getX(), 0),playerBody.getWorldCenter());
-    }
-    //Enable Accelerometer through MainActivity
-    public GameScene(MainActivity object) {
-        //ResourceManager.getInstance().engine.enableAccelerationSensor(object,this);
-        object.getEngine().enableAccelerationSensor(object,this);
+            @Override
+            public void run() {
+                final Body body = coin.body;
+                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(coin));
+                mPhysicsWorld.destroyBody(body);
+                detachChild(coin);
+                enemyList.remove(coin);
+            }
+        });
     }
 }
+
+

@@ -53,25 +53,7 @@ public class MainActivity extends BaseGameActivity {
     // Fields
     // ===========================================================
 
-    private BitmapTextureAtlas mBitmapTextureAtlas;
-    private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
-
-    private Scene mScene;
     private Camera mCamera;
-
-    protected ITiledTextureRegion mBat;
-    protected ITiledTextureRegion mGold;
-    protected ITextureRegion mPlayer;
-    protected ITextureRegion mPlatform;
-    protected ITextureRegion mSpikedPlatform;
-    protected ITextureRegion mBg;
-
-    protected PhysicsWorld mPhysicsWorld;
-
-    private Sprite player;
-    private Body playerBody;
-    private int accellerationSpeedX;
-
 
     // ===========================================================
     // Constructors
@@ -174,5 +156,6 @@ public class MainActivity extends BaseGameActivity {
 
     public void disableAccelerometer(){ disableAccelerationSensor(); }
     public void enableAccelerometer(IAccelerationListener cb){ enableAccelerationSensor(cb); }
+
 
 }
