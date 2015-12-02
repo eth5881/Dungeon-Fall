@@ -53,25 +53,7 @@ public class MainActivity extends BaseGameActivity {
     // Fields
     // ===========================================================
 
-    private BitmapTextureAtlas mBitmapTextureAtlas;
-    private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
-
-    private Scene mScene;
     private Camera mCamera;
-
-    protected ITiledTextureRegion mBat;
-    protected ITiledTextureRegion mGold;
-    protected ITextureRegion mPlayer;
-    protected ITextureRegion mPlatform;
-    protected ITextureRegion mSpikedPlatform;
-    protected ITextureRegion mBg;
-
-    protected PhysicsWorld mPhysicsWorld;
-
-    private Sprite player;
-    private Body playerBody;
-    private int accellerationSpeedX;
-
 
     // ===========================================================
     // Constructors
@@ -132,46 +114,4 @@ public class MainActivity extends BaseGameActivity {
                             | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
-    /*
-    @Override
-    public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
-        final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 2, SensorManager.GRAVITY_EARTH*1.5f);
-        //Log.d("MainActivity", "physics = " + mPhysicsWorld);
-        //get physics world from Game scene
-        // tried passing physics world from MainActivity to gameScene but didn't work(this is what's currently set up now)
-        // mPhysicsWorld = getPhysics();
-        mPhysicsWorld.setGravity(gravity);
-        Vector2Pool.recycle(gravity);
-    }
-    @Override
-    public void onAccelerationChanged(AccelerationData pAccelerationData) {
-        //accellerationSpeedX = (int)pAccelerationData.getX();
-
-        //   accellerometerSpeedY = (int)pAccelerometerData.getY();
-        Log.d("MainActivity", "Acclerometer = " + pAccelerationData);
-        //Log.d("MainActivity", "Acclerometer Speed = " + accellerationSpeedX);
-        //mySprite.setPosition(mySprite.getX() + myAccelerometerData.getX(), mySprite.getY() + myAccelerometerData.getY());
-
-    }
-    public void enableAccelerometer()
-    {
-        //only works with BaseGameActivity
-        enableAccelerationSensor(this);
-    }
-    public void disableAccelerometer(){ disableAccelerationSensor(); }
-    */
-
-     /*@Override
-    public void onResumeGame(){
-        super.onResumeGame();
-        this.enableAccelerationSensor(this);
-    }*/
-    /*@Override
-    public void onPauseGame() {
-        super.onPauseGame();
-        this.disableAccelerationSensor();
-    }*/
-
-
-
 }
