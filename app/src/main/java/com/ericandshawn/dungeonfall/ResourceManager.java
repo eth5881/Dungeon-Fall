@@ -43,6 +43,7 @@ public class ResourceManager {
     private BuildableBitmapTextureAtlas menuTextureAtlas;
     private BuildableBitmapTextureAtlas gameTextureAtlas;
     private BuildableBitmapTextureAtlas hudTextureAtlas;
+    private BuildableBitmapTextureAtlas storeTextureAtlas;
     protected ITextureRegion player_region;
     protected ITiledTextureRegion bat_region;
     protected ITiledTextureRegion gold_region;
@@ -52,6 +53,11 @@ public class ResourceManager {
     protected ITiledTextureRegion mp_region;
     protected ITextureRegion store_region;
     protected ITextureRegion goldHud_region;
+    protected ITextureRegion attackIncrease_region;
+    protected ITextureRegion addLife_region;
+    protected ITextureRegion defenseIncrease_region;
+    protected ITextureRegion addMp_region;
+    protected ITextureRegion closeStore_region;
 
 
     //FONTS
@@ -77,6 +83,7 @@ public class ResourceManager {
         loadHudGraphics();
         loadGameFonts();
         loadGameAudio();
+        loadStoreGraphics();
     }
     private void loadMenuGraphics()
     {
@@ -106,7 +113,7 @@ public class ResourceManager {
         hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
         lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "heartSheet.png",5,1);
         mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "mpSheet.png", 4, 1);
-        store_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "restart.png");
+        store_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "storeButton.png");
         goldHud_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "goldHud.png");
         //this.hudTextureAtlas.load();
 
@@ -155,6 +162,27 @@ public class ResourceManager {
             Debug.e(e);
         }
     }
+    private void loadStoreGraphics(){
+        storeTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
+        attackIncrease_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "increaseAttack_Button.png");
+        defenseIncrease_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "increaseDefense_Button.png");
+        addLife_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "heartButton.png");
+        addMp_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "mpButton.png");
+        closeStore_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "closeButton.png");
+
+        //this.hudTextureAtlas.load();
+
+        try
+        {
+            this.storeTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 0));
+            this.storeTextureAtlas.load();
+        }
+        catch (final ITextureAtlasBuilder.TextureAtlasBuilderException e)
+        {
+            Debug.e(e);
+        }
+    }
+
 
     private void loadGameFonts()
     {

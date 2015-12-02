@@ -172,6 +172,7 @@ public class MainActivity extends BaseGameActivity {
         this.disableAccelerationSensor();
     }*/
 
-
+    public void disableAccelerometer(){ disableAccelerationSensor(); }
+    public void enableAccelerometer(IAccelerationListener cb){ enableAccelerationSensor(cb); }
 
 }

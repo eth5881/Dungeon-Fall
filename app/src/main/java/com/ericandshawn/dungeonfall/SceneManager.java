@@ -14,7 +14,7 @@ public class SceneManager {
     private BaseScene splashScene;
     private BaseScene menuScene;
     private BaseScene gameScene;
-    private BaseScene loadingScene;
+    private BaseScene mStoreScene;
 
     //---------------------------------------------
     // VARIABLES

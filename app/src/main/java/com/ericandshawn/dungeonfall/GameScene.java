@@ -14,6 +14,7 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -66,19 +67,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
 
     private int floor;
-    private int numbCoins;
+    protected int numbCoins;
     private long exp;
     private long level;
 
+    private Scene mStoreScene;
     @Override
     public void createScene() {
-        setBackground(MainActivity.CAMERA_WIDTH/2-135, MainActivity.CAMERA_HEIGHT/2-240);
+        setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
         createHUD();
         createPhysics();
         //addPlayer(50, 0);
         addFloorItems();
         setOnSceneTouchListener(this);
         //camera.setChaseEntity(player);
+        makeStoreScene();
     }
 
     @Override
@@ -119,7 +122,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     }
     private void createHUD(){
 
-        numbCoins = 10;
+        numbCoins = 0;
         level = 1;
         exp = 0;
         floor = 1;
@@ -151,9 +154,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mGoldHud.setScale(3, 3);
         attachChild(mGoldHud);
 
-        mStore = createSprite(95, MainActivity.CAMERA_HEIGHT -70, ResourceManager.getInstance().store_region, vbom);
+        //mStore =  createSprite(95, MainActivity.CAMERA_HEIGHT -70, ResourceManager.getInstance().store_region, vbom);{
+        //mStore.setScale(3, 3);
+        //attachChild(mStore);
+
+        mStore = new Sprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT -100, ResourceManager.getInstance().store_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                Log.d("GameScene", "Store touched");
+                //SceneManager.getInstance().setStoreScene();
+                setChildScene(mStoreScene, false, true, true);
+                //makeStoreScene();
+                //activity.disableAccelerometer();
+                return true;
+            }
+        };
         mStore.setScale(3, 3);
+        registerTouchArea(mStore);
         attachChild(mStore);
+
 
         mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH/2 + 350,  40, ResourceManager.getInstance().mp_region, vbom);
         mMp.setScale(3, 3);
@@ -234,6 +254,104 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 this.mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(gold, goldBody, true, true));
             }
         }
+    }
+    private void makeStoreScene(){
+
+        mStoreScene =  new Scene();
+        mStoreScene.setBackground(new Background(Color.BLACK));
+        //setBackground(MainActivity.CAMERA_WIDTH, MainActivity.CAMERA_HEIGHT - 90);
+
+
+        Text levelText = new Text(0, 0, ResourceManager.getInstance().menuNameFont, "Store", new TextOptions(HorizontalAlign.LEFT), vbom);
+        levelText.setColor(Color.WHITE);
+        levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 - 150, 30);
+        mStoreScene.attachChild(levelText);
+
+        mStore = new Sprite(MainActivity.CAMERA_WIDTH-85, 45, ResourceManager.getInstance().closeStore_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                //Insert Code Here
+                //SceneManager.getInstance().setGameScene();
+                numbCoins+=10;
+                Log.d("GameScene", "numbCoins = " + numbCoins);
+                clearChildScene();
+                //activity.enableAccelerometer();
+                //engine.enableAccelerationSensor(MainActivity,this);
+                return true;
+            }
+        };
+        mStore.setScale(3, 3);
+        mStoreScene.registerTouchArea(mStore);
+        mStoreScene.attachChild(mStore);
+
+        mStore = new Sprite(220, MainActivity.CAMERA_HEIGHT/3 +150, ResourceManager.getInstance().attackIncrease_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+
+                 //Insert Code Here
+                //SceneManager.getInstance().setGameScene();
+                numbCoins+=10;
+                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //engine.start();
+                return true;
+            }
+        };
+        mStore.setScale(3, 3);
+        mStoreScene.registerTouchArea(mStore);
+        mStoreScene.attachChild(mStore);
+
+        mStore = new Sprite(MainActivity.CAMERA_WIDTH/2 + 300, MainActivity.CAMERA_HEIGHT/3 +150, ResourceManager.getInstance().defenseIncrease_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                //Insert Code Here
+                //SceneManager.getInstance().setGameScene();
+                numbCoins+=10;
+                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //engine.start();
+                return true;
+            }
+        };
+        mStore.setScale(3, 3);
+        mStoreScene.registerTouchArea(mStore);
+        mStoreScene.attachChild(mStore);
+
+        mStore = new Sprite(220, MainActivity.CAMERA_HEIGHT/2 +350, ResourceManager.getInstance().addLife_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                //Insert Code Here
+                //SceneManager.getInstance().setGameScene();
+                numbCoins+=10;
+                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //engine.start();
+                return true;
+            }
+        };
+        mStore.setScale(3, 3);
+        mStoreScene.registerTouchArea(mStore);
+        mStoreScene.attachChild(mStore);
+
+        mStore = new Sprite(MainActivity.CAMERA_WIDTH/2 + 300, MainActivity.CAMERA_HEIGHT/2 +350, ResourceManager.getInstance().addMp_region, vbom) {
+
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                //Insert Code Here
+                //SceneManager.getInstance().setGameScene();
+                numbCoins+=10;
+                Log.d("GameScene", "numbCoins = " + numbCoins);
+                //engine.start();
+                return true;
+            }
+        };
+        mStore.setScale(3, 3);
+        mStoreScene.registerTouchArea(mStore);
+        mStoreScene.attachChild(mStore);
+        //mStoreScene.setBackgroundEnabled(false);
+
+
     }
 
     @Override
