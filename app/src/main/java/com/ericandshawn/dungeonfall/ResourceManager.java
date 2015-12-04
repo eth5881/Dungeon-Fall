@@ -4,6 +4,7 @@ import android.graphics.Typeface;
 
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.opengl.font.Font;
 import org.andengine.opengl.font.FontFactory;
@@ -33,7 +34,7 @@ public class ResourceManager {
 
     //IMAGES
 
-    private BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
+    public BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
 
     public ITextureRegion menu_background_region;
     protected ITextureRegion game_background_region;
@@ -58,7 +59,8 @@ public class ResourceManager {
     protected ITextureRegion defenseIncrease_region;
     protected ITextureRegion addMp_region;
     protected ITextureRegion closeStore_region;
-
+    protected ITextureRegion storeBackground_region;
+    protected ITextureRegion nextFloor_region;
 
     //FONTS
 
@@ -66,10 +68,6 @@ public class ResourceManager {
     protected Font menuNameFont;
     protected ITexture hudFontTexture;
     protected Font hudNameFont;
-
-
-
-
 
     public void loadMenuResources()
     {
@@ -130,28 +128,22 @@ public class ResourceManager {
 
     private void loadGameGraphics()
     {
-
-        //setup random background
-        int bg = (int)(Math.round(Math.random()*8));
-        if(bg == 0){
+        int bg = (int) (Math.round(Math.random() * 8));
+        if (bg == 0) {
             bg = 8;
         }
         mBackgroundBitmapTextureAtlas = new BitmapTextureAtlas(activity.getTextureManager(), 512, 512, TextureOptions.BILINEAR);
         game_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBackgroundBitmapTextureAtlas, activity, "" + bg + ".png", 0, 0);
         mBackgroundBitmapTextureAtlas.load();
 
-
-        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),512, 512, TextureOptions.BILINEAR);
+        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
         player_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "hero.png");
-        bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png",3,1);
+        bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png", 3, 1);
         gold_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "gold.png",8,1);
         platform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform.png");
         spikedPlatform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "stakes.png");
+        nextFloor_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "nextScreen.png");
 
-        //mBat = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, activity, "bat.png", 35, 0, 3, 1);
-        //mGold = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, activity, "gold.png", 185, 0, 8, 1);
-        //mPlatform = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas, activity, "platform.png", 0, 51);
-        //mSpikedPlatform = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBitmapTextureAtlas, activity, "stakes.png", 71, 51);
         try
         {
             this.gameTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0,1,0));
@@ -164,6 +156,7 @@ public class ResourceManager {
     }
     private void loadStoreGraphics(){
         storeTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
+        storeBackground_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "store.png");
         attackIncrease_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "increaseAttack_Button.png");
         defenseIncrease_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "increaseDefense_Button.png");
         addLife_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "heartButton.png");

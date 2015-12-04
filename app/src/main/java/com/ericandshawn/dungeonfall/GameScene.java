@@ -20,7 +20,6 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
-import org.andengine.entity.sprite.ButtonSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
 import org.andengine.entity.text.TextOptions;
@@ -33,8 +32,6 @@ import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.input.sensor.acceleration.AccelerationData;
 import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.texture.region.ITiledTextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
@@ -55,36 +52,83 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     private ArrayList<Coin> coinList;
     private ArrayList<Enemy> enemyList;
+    private ArrayList<GameObject> gameItems;
 
     private boolean playerDrop = false;
-
 
     //HUD Sprites
     private Sprite mStore;
     private Sprite mGoldHud;
     private AnimatedSprite mMp;
     private AnimatedSprite mLives;
+    private Sprite mNextScreen;
 
     Text coinText;
+    Text levelText;
+    Text floorText;
+    Text expText;
+    Text mpText;
 
-    private int floor;
-
-    private int goldAmount;
-    private long exp;
-    private long level;
-    private int lives;
-    private int mp;
+    private int floor = 1;
+    private int goldAmount = 0;
+    private long exp = 0;
+    private long level = 1;
+    private int lives = 1;
+    private int mp = 0;
 
     private Scene mStoreScene;
+    private Scene mNextScreenScene;
+
     @Override
     public void createScene() {
-        setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
-        createHUD();
         createPhysics();
-        addFloorItems();
         setOnSceneTouchListener(this);
-        //camera.setChaseEntity(player);
+        resetScene();
+    }
+
+    public void resetScene() {
+        //setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
+        createHUD();
+        addFloorItems();
         makeStoreScene();
+        makeNextScreen();
+    }
+
+    public void cleanScene(){
+        clearChildScene();
+
+        for(int i=0;i<enemyList.size();i++){
+            destroyEnemy(enemyList.get(i));
+        }
+        for(int i=0;i<coinList.size();i++){
+            destroyCoin(coinList.get(i));
+        }
+        for(int i=0;i<gameItems.size();i++){
+            destroyGameItems(gameItems.get(i));
+        }
+        enemyList.clear();
+        coinList.clear();
+        gameItems.clear();
+        //detachChild(mBg);
+        //mBg.dispose();
+        detachChild(mStore);
+        detachChild(mGoldHud);
+        detachChild(mMp);
+        detachChild(mLives);
+        detachChild(coinText);
+        detachChild(levelText);
+        detachChild(floorText);
+        detachChild(expText);
+        detachChild(mpText);
+        /*mStore.dispose();
+        mGoldHud.dispose();
+        mMp.dispose();
+        mLives.dispose();
+        coinText.dispose();
+        levelText.dispose();
+        floorText.dispose();
+        expText.dispose();
+        mpText.dispose();*/
     }
 
     @Override
@@ -119,14 +163,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             public void onUpdate(float pSecondsElapsed) {
                 //Game loop
-                if (player != null) {
+                if (playerDrop) {
                     //if hero leaves the screen, detach sprite from scene and destroy body
                     if (player.getY() > MainActivity.CAMERA_HEIGHT) {
                         mPhysicsWorld.destroyBody(playerBody);
                         player.detachSelf();
                         player.dispose();
-                        player = null;
                         playerDrop = false;
+                        disposeScene();
+                        setChildScene(mNextScreenScene, false, true, true);
                     }
                     //set user data for enemies
                     for (int i = 0; i < enemyList.size(); i++) {
@@ -159,9 +204,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                     String coinData = "coin" + i;
                     if(("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
                         //collect coin and add it to gold amount
+                        Log.d("HIT", "" + coinList.get(i));
                         destroyCoin(coinList.get(i));
-                        goldAmount = goldAmount + Math.round((int)(Math.random() * 25));
-                        //coinText.setText(String.valueOf(goldAmount));
+                        int randNum = Math.round((int)(Math.random() * 25));
+                        if(randNum == 0){
+                            randNum = 1;
+                        }
+                        goldAmount = goldAmount + randNum;
+                        coinText.setText(String.valueOf(goldAmount));
                     }
                 }
             }
@@ -179,6 +229,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                     String batData = "bat" + i;
                     if(("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
                         //kill enemy and add experience
+                        Log.d("HIT", "" + enemyList.get(i));
                         destroyEnemy(enemyList.get(i));
                     }
                 }
@@ -237,33 +288,27 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         attachChild(mBg);
     }
     private void createHUD(){
-
-
-        goldAmount = 0;
-        level = 1;
-        exp = 0;
-        floor = 1;
-
         gameHUD = new HUD();
+        int textLength = 4;
         // Draw the hud
-        Text levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
+        levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level,  new TextOptions(HorizontalAlign.LEFT), vbom);
         //levelText.setColor(Color.BLACK);
         levelText.setPosition(MainActivity.CAMERA_WIDTH/2 + 220, 115);
         attachChild(levelText);
 
-        Text floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
+        floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
         floorText.setPosition(20, 115);
         attachChild(floorText);
 
-        Text expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
+        expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
         expText.setPosition(MainActivity.CAMERA_WIDTH - 150, 115);
         attachChild(expText);
 
-        Text mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+        mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
         mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 150,35);
         attachChild(mpText);
 
-        coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), new TextOptions(HorizontalAlign.LEFT), vbom);
+        coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
         coinText.setPosition(270, 115);
         attachChild(coinText);
 
@@ -271,19 +316,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mGoldHud.setScale(3, 3);
         attachChild(mGoldHud);
 
-        //mStore =  createSprite(95, MainActivity.CAMERA_HEIGHT -70, ResourceManager.getInstance().store_region, vbom);{
-        //mStore.setScale(3, 3);
-        //attachChild(mStore);
-
         mStore = new Sprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT -100, ResourceManager.getInstance().store_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
                 Log.d("GameScene", "Store touched");
-                //SceneManager.getInstance().setStoreScene();
                 setChildScene(mStoreScene, false, true, true);
-                //makeStoreScene();
-                //activity.disableAccelerometer();
                 return true;
             }
         };
@@ -317,47 +355,101 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     }
 
     private void addFloorItems(){
-        final FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(1, 0, 0.3f);
         coinList = new ArrayList<>();
         enemyList = new ArrayList<>();
+        gameItems = new ArrayList<>();
         for(int i=0;i<12;i++){
             if (Math.random() < 0.5) {
                 //add bat
-                enemyList.add(new Enemy((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().bat_region, vbom, mPhysicsWorld, this, null, 3, 3, 100));
+                int randX = (int) (Math.random() * 900);
+                int randY = (int) (Math.random() * 1700);
+                if(randX < 50){
+                    randX = randX + 50;
+                }
+                if(randX > 850){
+                    randX = randX - 50;
+                }
+                if(randY < 50){
+                    randY = randY + 300;
+                }
+                if(randY > 1650){
+                    randY = randY - 50;
+                }
+                enemyList.add(new Enemy(randX, randY, ResourceManager.getInstance().bat_region, vbom, mPhysicsWorld, this, "", 3, 3, 100));
             } else if (Math.round(Math.random() * 10) >= 8) {
                 //add platform
-                final Sprite platform;
-                final Body platformBody;
-
-                platform = new Sprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().platform_region, vbom);
-                platform.setScale(3, 3);
-                platformBody = PhysicsFactory.createBoxBody(mPhysicsWorld, platform, BodyDef.BodyType.StaticBody, objectFixtureDef);
-
-                attachChild(platform);
-                mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(platform, platformBody, true, true));
+                int randX = (int) (Math.random() * 900);
+                int randY = (int) (Math.random() * 1700);
+                if(randX < 50){
+                    randX = randX + 50;
+                }
+                if(randX > 850){
+                    randX = randX - 50;
+                }
+                if(randY < 50){
+                    randY = randY + 300;
+                }
+                if(randY > 1650){
+                    randY = randY - 50;
+                }
+                gameItems.add(new GameObject(randX, randY, ResourceManager.getInstance().platform_region, vbom, mPhysicsWorld, this, "", 3, 3));
             } else if (Math.round(Math.random() * 10) >= 9) {
                 //add platform with stakes
-                final Sprite stakes;
-                final Body stakesBody;
-
-                stakes = new Sprite((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().spikedPlatform_region, vbom);
-                stakes.setScale(3, 3);
-                stakesBody = PhysicsFactory.createBoxBody(mPhysicsWorld, stakes, BodyDef.BodyType.StaticBody, objectFixtureDef);
-
-                attachChild(stakes);
-                mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(stakes, stakesBody, true, true));
+                int randX = (int) (Math.random() * 900);
+                int randY = (int) (Math.random() * 1700);
+                if(randX < 50){
+                    randX = randX + 50;
+                }
+                if(randX > 850){
+                    randX = randX - 50;
+                }
+                if(randY < 50){
+                    randY = randY + 300;
+                }
+                if(randY > 1650){
+                    randY = randY - 50;
+                }
+                gameItems.add(new GameObject(randX, randY, ResourceManager.getInstance().spikedPlatform_region, vbom, mPhysicsWorld, this, "", 3, 3));
             } else {
                 //add gold
-                coinList.add(new Coin((int) (Math.random() * 900), (int) (Math.random() * 1700), ResourceManager.getInstance().gold_region, vbom, mPhysicsWorld, this, null, 3, 3, 100));
+                int randX = (int) (Math.random() * 900);
+                int randY = (int) (Math.random() * 1700);
+                if(randX < 50){
+                    randX = randX + 50;
+                }
+                if(randX > 850){
+                    randX = randX - 50;
+                }
+                if(randY < 50){
+                    randY = randY + 300;
+                }
+                if(randY > 1650){
+                    randY = randY - 50;
+                }
+                coinList.add(new Coin(randX, randY, ResourceManager.getInstance().gold_region, vbom, mPhysicsWorld, this, "", 3, 3, 100));
             }
         }
     }
+    private void makeNextScreen(){
+        mNextScreenScene = new Scene();
+        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom){
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                floor++;
+                cleanScene();
+                ResourceManager.getInstance().loadGameResources();
+                resetScene();
+                return true;
+            }
+        };
+        mNextScreen.setScale(4, 4);
+        mNextScreenScene.registerTouchArea(mNextScreen);
+        mNextScreenScene.attachChild(mNextScreen);
+    }
     private void makeStoreScene(){
 
-        mStoreScene =  new Scene();
+        mStoreScene = new Scene();
         mStoreScene.setBackground(new Background(Color.BLACK));
-        //setBackground(MainActivity.CAMERA_WIDTH, MainActivity.CAMERA_HEIGHT - 90);
-
 
         Text levelText = new Text(0, 0, ResourceManager.getInstance().menuNameFont, "Store", new TextOptions(HorizontalAlign.LEFT), vbom);
         levelText.setColor(Color.WHITE);
@@ -447,6 +539,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         //mStoreScene.setBackgroundEnabled(false);
 
 
+    }
+
+    private void destroyGameItems(final GameObject go)
+    {
+        activity.runOnUpdateThread(new Runnable() {
+
+            @Override
+            public void run() {
+                final Body body = go.body;
+                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(go));
+                mPhysicsWorld.destroyBody(body);
+                detachChild(go);
+                gameItems.remove(go);
+            }
+        });
     }
 
     private void destroyEnemy(final Enemy enemy)
