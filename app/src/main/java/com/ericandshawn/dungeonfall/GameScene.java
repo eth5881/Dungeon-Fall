@@ -55,6 +55,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private ArrayList<GameObject> gameItems;
 
     private boolean playerDrop = false;
+    private boolean isAttacking = false;
+    private boolean isDead = false;
 
     //HUD Sprites
     private Sprite mStore;
@@ -62,6 +64,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private AnimatedSprite mMp;
     private AnimatedSprite mLives;
     private Sprite mNextScreen;
+    private Sprite mGameOverScreen;
+    private AnimatedSprite mCharge;
 
     Text coinText;
     Text levelText;
@@ -73,12 +77,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private int goldAmount = 0;
     private long exp = 0;
     private long level = 1;
-    private int lives = 1;
-    private int mp = 0;
+    private int lives = 2;
+    private int mp = 3;
     private int help;
 
     private Scene mStoreScene;
     private Scene mNextScreenScene;
+    private Scene mGameOverScene;
 
     @Override
     public void createScene() {
@@ -87,11 +92,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         if (!ResourceManager.getInstance().bgMusic.isPlaying()) {
             ResourceManager.getInstance().bgMusic.play();
         }
-        //ResourceManager.getInstance().bgSound.play();
-        //ResourceManager.getInstance().bgSound.setLooping(true);
-
         resetScene();
-
     }
 
     public void resetScene() {
@@ -99,11 +100,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         createHUD();
         addFloorItems();
         makeStoreScene();
+        makeNextScreen();
+        makeGameOverScene();
     }
 
     public void cleanScene(){
-        clearChildScene();
-
         for(int i=0;i<enemyList.size();i++){
             destroyEnemy(enemyList.get(i));
             //Log.d("GameScene", "loop list reset = " + enemyList.size());
@@ -122,8 +123,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         coinList.clear();
         gameItems.clear();
 
-        //detachChild(mBg);
-        //mBg.dispose();
+        detachChild(mBg);
+        mBg.dispose();
         detachChild(mStore);
         detachChild(mGoldHud);
         detachChild(mMp);
@@ -142,6 +143,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         floorText.dispose();
         expText.dispose();
         mpText.dispose();
+    }
+
+    private void restartGame(){
+        floor = 1;
+        goldAmount = 0;
+        exp = 0;
+        level = 1;
+        lives = 2;
+        mp = 3;
+        disposeScene();
+        cleanScene();
+        ResourceManager.getInstance().loadGameResources();
+        resetScene();
+        clearChildScene();
+        isDead = false;
+        if (!ResourceManager.getInstance().bgMusic.isPlaying()) {
+            ResourceManager.getInstance().bgMusic.play();
+        }
     }
 
     @Override
@@ -178,15 +197,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 //Game loop
                 if (playerDrop) {
                     //if hero leaves the screen, detach sprite from scene and destroy body
-                    if (player.getY() > MainActivity.CAMERA_HEIGHT) {
-
+                    if ((player.getY() > MainActivity.CAMERA_HEIGHT) && !isDead) {
                         mPhysicsWorld.destroyBody(playerBody);
                         player.detachSelf();
                         player.dispose();
                         playerDrop = false;
-                        disposeScene();
-                        makeNextScreen();
                         setChildScene(mNextScreenScene, false, true, true);
+                    }
+                    if(isAttacking){
+                        mCharge.setVisible(true);
+                        mCharge.setX((player.getX()) - (player.getWidth()+40));
+                        mCharge.setY((player.getY()) - (player.getHeight()+15));
+                    }else{
+                        mCharge.setVisible(false);
                     }
                     //set user data for enemies
                     for (int i = 0; i < enemyList.size(); i++) {
@@ -247,9 +270,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 for(int i=0;i<enemyList.size();i++) {
                     String batData = "bat" + i;
                     if(("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
-                        //kill enemy and add experience
-                        Log.d("HIT", "" + enemyList.get(i));
-                        destroyEnemy(enemyList.get(i));
+                        if(isAttacking){
+                            //kill enemy and add experience
+                            Log.d("HIT", "" + enemyList.get(i));
+                            destroyEnemy(enemyList.get(i));
+                        }else {
+                            if(lives != 0) {
+                                ResourceManager.getInstance().hitSound.play();
+                                lives--;
+                                mLives.setCurrentTileIndex(lives);
+                            }else {
+                                ResourceManager.getInstance().bgMusic.stop();
+                                ResourceManager.getInstance().dieSound.play();
+                                isDead = true;
+                                mPhysicsWorld.destroyBody(playerBody);
+                                player.detachSelf();
+                                player.dispose();
+                                playerDrop = false;
+                                setChildScene(mGameOverScene, false, true, true);
+                            }
+                        }
                     }
                 }
             }
@@ -275,6 +315,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             if (pSceneTouchEvent.isActionDown() && !playerDrop) {
                 addPlayer(pSceneTouchEvent.getX(), -150);
                 return true;
+            }else if(pSceneTouchEvent.isActionDown()){
+                isAttacking = true;
+                mCharge.animate(20);
+                Log.d("HOLDING", "" + isAttacking);
+            }else if(pSceneTouchEvent.isActionUp() && playerDrop){
+                isAttacking = false;
+                mCharge.stopAnimation();
+                Log.d("HOLDING", "" + isAttacking);
             }
         }
         return false;
@@ -307,56 +355,113 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         attachChild(mBg);
     }
     private void createHUD(){
-        gameHUD = new HUD();
-        int textLength = 4;
-        // Draw the hud
-        levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level,  new TextOptions(HorizontalAlign.LEFT), vbom);
-        //levelText.setColor(Color.BLACK);
-        levelText.setPosition(MainActivity.CAMERA_WIDTH/2 + 220, 115);
-        attachChild(levelText);
+        if(floor < 1) {
+            gameHUD = new HUD();
+            int textLength = 4;
+            // Draw the hud
+            levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: 1", new TextOptions(HorizontalAlign.LEFT), vbom);
+            //levelText.setColor(Color.BLACK);
+            levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 + 220, 115);
+            attachChild(levelText);
 
-        floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
-        floorText.setPosition(20, 115);
-        attachChild(floorText);
+            floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: 1", new TextOptions(HorizontalAlign.LEFT), vbom);
+            floorText.setPosition(20, 115);
+            attachChild(floorText);
 
-        expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
-        expText.setPosition(MainActivity.CAMERA_WIDTH - 150, 115);
-        attachChild(expText);
+            expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: 0", new TextOptions(HorizontalAlign.LEFT), vbom);
+            expText.setPosition(MainActivity.CAMERA_WIDTH - 150, 115);
+            attachChild(expText);
 
-        mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
-        mpText.setPosition((MainActivity.CAMERA_WIDTH /2) + 150,35);
-        attachChild(mpText);
+            mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+            mpText.setPosition((MainActivity.CAMERA_WIDTH / 2) + 150, 35);
+            attachChild(mpText);
 
-        coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
-        coinText.setPosition(270, 115);
-        attachChild(coinText);
+            coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
+            coinText.setPosition(270, 115);
+            attachChild(coinText);
 
-        mGoldHud = createSprite(220, 120, ResourceManager.getInstance().goldHud_region, vbom);
-        mGoldHud.setScale(3, 3);
-        attachChild(mGoldHud);
+            mGoldHud = createSprite(220, 120, ResourceManager.getInstance().goldHud_region, vbom);
+            mGoldHud.setScale(3, 3);
+            attachChild(mGoldHud);
 
-        mStore = new Sprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT -100, ResourceManager.getInstance().store_region, vbom) {
+            mStore = new Sprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {
 
-            @Override
-            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                setChildScene(mStoreScene, false, true, true);
-                return true;
-            }
-        };
-        mStore.setScale(3, 3);
-        registerTouchArea(mStore);
-        attachChild(mStore);
+                @Override
+                public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                    setChildScene(mStoreScene, false, true, true);
+                    return true;
+                }
+            };
+            mStore.setScale(3, 3);
+            registerTouchArea(mStore);
+            attachChild(mStore);
 
 
-        mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH/2 + 350,  40, ResourceManager.getInstance().mp_region, vbom);
-        mMp.setScale(3, 3);
-        attachChild(mMp);
+            mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH / 2 + 350, 40, ResourceManager.getInstance().mp_region, vbom);
+            mMp.setCurrentTileIndex(3);
+            mMp.setScale(3, 3);
+            attachChild(mMp);
 
-        mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
-        mLives.setScale(3, 3);
-        attachChild(mLives);
+            mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
+            mLives.setCurrentTileIndex(2);
+            mLives.setScale(3, 3);
+            attachChild(mLives);
 
-        camera.setHUD(gameHUD);
+            camera.setHUD(gameHUD);
+        }else{
+            gameHUD = new HUD();
+            int textLength = 4;
+            // Draw the hud
+            levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
+            //levelText.setColor(Color.BLACK);
+            levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 + 220, 115);
+            attachChild(levelText);
+
+            floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
+            floorText.setPosition(20, 115);
+            attachChild(floorText);
+
+            expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
+            expText.setPosition(MainActivity.CAMERA_WIDTH - 150, 115);
+            attachChild(expText);
+
+            mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+            mpText.setPosition((MainActivity.CAMERA_WIDTH / 2) + 150, 35);
+            attachChild(mpText);
+
+            coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
+            coinText.setPosition(270, 115);
+            attachChild(coinText);
+
+            mGoldHud = createSprite(220, 120, ResourceManager.getInstance().goldHud_region, vbom);
+            mGoldHud.setScale(3, 3);
+            attachChild(mGoldHud);
+
+            mStore = new Sprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {
+
+                @Override
+                public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                    setChildScene(mStoreScene, false, true, true);
+                    return true;
+                }
+            };
+            mStore.setScale(3, 3);
+            registerTouchArea(mStore);
+            attachChild(mStore);
+
+
+            mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH / 2 + 350, 40, ResourceManager.getInstance().mp_region, vbom);
+            mMp.setCurrentTileIndex(mp);
+            mMp.setScale(3, 3);
+            attachChild(mMp);
+
+            mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
+            mLives.setCurrentTileIndex(lives);
+            mLives.setScale(3, 3);
+            attachChild(mLives);
+
+            camera.setHUD(gameHUD);
+        }
     }
 
     private void addPlayer(final float pX, final float pY) {
@@ -370,6 +475,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
         attachChild(player);
         mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(player, playerBody, true, true));
+
+        mCharge = createAnimatedSprite(0, -500, ResourceManager.getInstance().charge_region, vbom);
+        attachChild(mCharge);
+        mCharge.animate(20);
     }
 
     private void addFloorItems(){
@@ -387,8 +496,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 if(randX > 850){
                     randX = randX - 50;
                 }
-                if(randY < 50){
-                    randY = randY + 300;
+                if(randY < 400){
+                    randY = randY + 200;
                 }
                 if(randY > 1650){
                     randY = randY - 50;
@@ -405,13 +514,14 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 if(randX > 850){
                     randX = randX - 50;
                 }
-                if(randY < 50){
-                    randY = randY + 300;
+                if(randY < 400){
+                    randY = randY + 200;
                 }
                 if(randY > 1650){
                     randY = randY - 50;
                 }
-                gameItems.add(new GameObject(randX, randY, ResourceManager.getInstance().platform_region, vbom, mPhysicsWorld, this, "", 3, 3));
+                GameObject platform = new GameObject(randX, randY, ResourceManager.getInstance().platform_region, vbom, mPhysicsWorld, this, "", 3, 3);
+                gameItems.add(platform);
             } else if (Math.round(Math.random() * 10) >= 9) {
                 //add platform with stakes
                 int randX = (int) (Math.random() * 900);
@@ -422,8 +532,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 if(randX > 850){
                     randX = randX - 50;
                 }
-                if(randY < 50){
-                    randY = randY + 300;
+                if(randY < 400){
+                    randY = randY + 200;
                 }
                 if(randY > 1650){
                     randY = randY - 50;
@@ -439,8 +549,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 if(randX > 850){
                     randX = randX - 50;
                 }
-                if(randY < 50){
-                    randY = randY + 300;
+                if(randY < 400){
+                    randY = randY + 200;
                 }
                 if(randY > 1650){
                     randY = randY - 50;
@@ -450,21 +560,35 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         }
     }
     private void makeNextScreen(){
-
         mNextScreenScene = new Scene();
-        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom){
+        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom) {
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                disposeScene();
                 floor++;
                 cleanScene();
                 ResourceManager.getInstance().loadGameResources();
                 resetScene();
+                clearChildScene();
                 return true;
             }
         };
         mNextScreen.setScale(4, 4);
         mNextScreenScene.registerTouchArea(mNextScreen);
         mNextScreenScene.attachChild(mNextScreen);
+    }
+    private void makeGameOverScene(){
+        mGameOverScene = new Scene();
+        mGameOverScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().gameOver_region, vbom) {
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                restartGame();
+                return true;
+            }
+        };
+        mGameOverScreen.setScale(4, 4);
+        mGameOverScene.registerTouchArea(mGameOverScreen);
+        mGameOverScene.attachChild(mGameOverScreen);
     }
     private void makeStoreScene(){
 

@@ -58,6 +58,7 @@ public class ResourceManager {
     protected ITextureRegion spikedPlatform_region;
     protected ITiledTextureRegion lives_region;
     protected ITiledTextureRegion mp_region;
+    protected ITiledTextureRegion charge_region;
     protected ITextureRegion store_region;
     protected ITextureRegion goldHud_region;
     protected ITextureRegion attackIncrease_region;
@@ -67,6 +68,7 @@ public class ResourceManager {
     protected ITextureRegion closeStore_region;
     protected ITextureRegion storeBackground_region;
     protected ITextureRegion nextFloor_region;
+    protected ITextureRegion gameOver_region;
 
     //FONTS
 
@@ -154,13 +156,15 @@ public class ResourceManager {
         game_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBackgroundBitmapTextureAtlas, activity, "" + bg + ".png", 0, 0);
         mBackgroundBitmapTextureAtlas.load();
 
-        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
+        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),4096, 1024, TextureOptions.BILINEAR);
         player_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "hero.png");
         bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png", 3, 1);
         gold_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "gold.png",8,1);
         platform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform.png");
         spikedPlatform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "stakes.png");
         nextFloor_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "nextScreen.png");
+        gameOver_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "gameover.png");
+        charge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "charge.png", 12, 4);
 
         try
         {
