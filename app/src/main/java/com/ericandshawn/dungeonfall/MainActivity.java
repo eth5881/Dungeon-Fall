@@ -95,6 +95,8 @@ public class MainActivity extends BaseGameActivity {
     public void onDestroy(){
         super.onDestroy();
         System.exit(0);
+        if (isGameLoaded())
+            ResourceManager.getInstance().bgMusic.stop();
     }
     @Override
     protected void onPause(){

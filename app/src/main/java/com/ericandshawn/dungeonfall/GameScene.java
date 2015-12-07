@@ -197,7 +197,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 //Game loop
                 if (playerDrop) {
                     //if hero leaves the screen, detach sprite from scene and destroy body
-                    if ((player.getY() > MainActivity.CAMERA_HEIGHT) && !isDead) {
+                    if (player.getY() > MainActivity.CAMERA_HEIGHT) {
                         mPhysicsWorld.destroyBody(playerBody);
                         player.detachSelf();
                         player.dispose();
@@ -221,10 +221,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                         String coinString = "coin" + j;
                         coinList.get(j).body.setUserData(coinString);
                     }
-
                 }
-                else{
-                    //Log.d("GameScene", "Broken on update");
+                if(isDead){
+                    mPhysicsWorld.destroyBody(playerBody);
+                    player.detachSelf();
+                    player.dispose();
+                    playerDrop = false;
+                    ResourceManager.getInstance().bgMusic.stop();
+                    ResourceManager.getInstance().dieSound.play();
+                    setChildScene(mGameOverScene, false, true, true);
                 }
             }
         });
@@ -274,20 +279,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                             //kill enemy and add experience
                             Log.d("HIT", "" + enemyList.get(i));
                             destroyEnemy(enemyList.get(i));
-                        }else {
+                        }else if(!isAttacking) {
                             if(lives != 0) {
                                 ResourceManager.getInstance().hitSound.play();
                                 lives--;
                                 mLives.setCurrentTileIndex(lives);
                             }else {
-                                ResourceManager.getInstance().bgMusic.stop();
-                                ResourceManager.getInstance().dieSound.play();
                                 isDead = true;
-                                mPhysicsWorld.destroyBody(playerBody);
-                                player.detachSelf();
-                                player.dispose();
-                                playerDrop = false;
-                                setChildScene(mGameOverScene, false, true, true);
                             }
                         }
                     }
@@ -312,7 +310,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     @Override
     public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
         if (mPhysicsWorld != null) {
-            if (pSceneTouchEvent.isActionDown() && !playerDrop) {
+            if (pSceneTouchEvent.isActionDown() && !playerDrop && !isDead) {
                 addPlayer(pSceneTouchEvent.getX(), -150);
                 return true;
             }else if(pSceneTouchEvent.isActionDown()){
