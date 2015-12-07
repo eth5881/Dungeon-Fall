@@ -75,6 +75,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private long level = 1;
     private int lives = 1;
     private int mp = 0;
+    private int help;
 
     private Scene mStoreScene;
     private Scene mNextScreenScene;
@@ -83,15 +84,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     public void createScene() {
         createPhysics();
         setOnSceneTouchListener(this);
+        if (!ResourceManager.getInstance().bgMusic.isPlaying()) {
+            ResourceManager.getInstance().bgMusic.play();
+        }
+        //ResourceManager.getInstance().bgSound.play();
+        //ResourceManager.getInstance().bgSound.setLooping(true);
+
         resetScene();
+
     }
 
     public void resetScene() {
-        //setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
+        setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
         createHUD();
         addFloorItems();
         makeStoreScene();
-        makeNextScreen();
     }
 
     public void cleanScene(){
@@ -99,16 +106,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
         for(int i=0;i<enemyList.size();i++){
             destroyEnemy(enemyList.get(i));
+            //Log.d("GameScene", "loop list reset = " + enemyList.size());
         }
         for(int i=0;i<coinList.size();i++){
             destroyCoin(coinList.get(i));
+            //Log.d("GameScene", "Loop coin list removed = " + coinList.size());
         }
         for(int i=0;i<gameItems.size();i++){
             destroyGameItems(gameItems.get(i));
+            //Log.d("GameScene", "Loop game list removed = " + gameItems.size());
+
         }
+
         enemyList.clear();
         coinList.clear();
         gameItems.clear();
+
         //detachChild(mBg);
         //mBg.dispose();
         detachChild(mStore);
@@ -120,7 +133,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         detachChild(floorText);
         detachChild(expText);
         detachChild(mpText);
-        /*mStore.dispose();
+        mStore.dispose();
         mGoldHud.dispose();
         mMp.dispose();
         mLives.dispose();
@@ -128,7 +141,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         levelText.dispose();
         floorText.dispose();
         expText.dispose();
-        mpText.dispose();*/
+        mpText.dispose();
     }
 
     @Override
@@ -166,11 +179,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 if (playerDrop) {
                     //if hero leaves the screen, detach sprite from scene and destroy body
                     if (player.getY() > MainActivity.CAMERA_HEIGHT) {
+
                         mPhysicsWorld.destroyBody(playerBody);
                         player.detachSelf();
                         player.dispose();
                         playerDrop = false;
                         disposeScene();
+                        makeNextScreen();
                         setChildScene(mNextScreenScene, false, true, true);
                     }
                     //set user data for enemies
@@ -183,6 +198,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                         String coinString = "coin" + j;
                         coinList.get(j).body.setUserData(coinString);
                     }
+
+                }
+                else{
+                    //Log.d("GameScene", "Broken on update");
                 }
             }
         });
@@ -320,7 +339,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                Log.d("GameScene", "Store touched");
                 setChildScene(mStoreScene, false, true, true);
                 return true;
             }
@@ -376,7 +394,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                     randY = randY - 50;
                 }
                 enemyList.add(new Enemy(randX, randY, ResourceManager.getInstance().bat_region, vbom, mPhysicsWorld, this, "", 3, 3, 100));
-            } else if (Math.round(Math.random() * 10) >= 8) {
+                //Log.d("GameScene", "emeylist add = " + enemyList.size());
+            }else if (Math.round(Math.random() * 10) >= 8) {
                 //add platform
                 int randX = (int) (Math.random() * 900);
                 int randY = (int) (Math.random() * 1700);
@@ -431,6 +450,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         }
     }
     private void makeNextScreen(){
+
         mNextScreenScene = new Scene();
         mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom){
             @Override
@@ -453,18 +473,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
         Text levelText = new Text(0, 0, ResourceManager.getInstance().menuNameFont, "Store", new TextOptions(HorizontalAlign.LEFT), vbom);
         levelText.setColor(Color.WHITE);
-        levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 - 150, 30);
+        levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 - 190, 180);
         mStoreScene.attachChild(levelText);
 
         mStore = new Sprite(MainActivity.CAMERA_WIDTH-85, 45, ResourceManager.getInstance().closeStore_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                //Insert Code Here
                 //SceneManager.getInstance().setGameScene();
                 clearChildScene();
                 //activity.enableAccelerometer();
                 //engine.enableAccelerationSensor(MainActivity,this);
+
+
                 return true;
             }
         };
@@ -476,12 +497,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                if (goldAmount>=50){
+                    goldAmount = goldAmount - 50;
+                    coinText.setText(String.valueOf(goldAmount));
+                    ResourceManager.getInstance().coinSound.play();
 
-                 //Insert Code Here
-                //SceneManager.getInstance().setGameScene();
-                //goldAmount+=10;
-                //Log.d("GameScene", "numbCoins = " + goldAmount);
-                //engine.start();
+                }
                 return true;
             }
         };
@@ -493,11 +514,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                //Insert Code Here
-                //SceneManager.getInstance().setGameScene();
-                //goldAmount+=10;
-                //Log.d("GameScene", "numbCoins = " + goldAmount);
-                //engine.start();
+                if (goldAmount>=50){
+                    goldAmount = goldAmount - 50;
+                    coinText.setText(String.valueOf(goldAmount));
+                    ResourceManager.getInstance().coinSound.play();
+
+                }
                 return true;
             }
         };
@@ -509,11 +531,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                //Insert Code Here
-                //SceneManager.getInstance().setGameScene();
-                lives += 1;
-                //Log.d("GameScene", "numbCoins = " + lives);
-                //engine.start();
+                if (goldAmount>=100){
+                    lives += 1;
+                    goldAmount = goldAmount - 50;
+                    coinText.setText(String.valueOf(goldAmount));
+                    ResourceManager.getInstance().coinSound.play();
+
+                }
                 return true;
             }
         };
@@ -525,11 +549,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                //Insert Code Here
-                //SceneManager.getInstance().setGameScene();
-                mp+=1;
-                Log.d("GameScene", "mp = " + mp);
-                //engine.start();
+                if (goldAmount>=50){
+                    mp +=1;
+                    goldAmount = goldAmount - 50;
+                    coinText.setText(String.valueOf(goldAmount));
+                    ResourceManager.getInstance().coinSound.play();
+
+                }
                 return true;
             }
         };
@@ -543,17 +569,19 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
     private void destroyGameItems(final GameObject go)
     {
-        activity.runOnUpdateThread(new Runnable() {
 
-            @Override
-            public void run() {
-                final Body body = go.body;
-                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(go));
-                mPhysicsWorld.destroyBody(body);
-                detachChild(go);
-                gameItems.remove(go);
-            }
-        });
+       activity.runOnUpdateThread(new Runnable() {
+
+           @Override
+           public void run() {
+               final Body body = go.body;
+               mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(go));
+               mPhysicsWorld.destroyBody(body);
+               detachChild(go);
+               gameItems.remove(go);
+               //Log.d("GameScene", "Removed Game Item = " + gameItems.size());
+           }
+       });
     }
 
     private void destroyEnemy(final Enemy enemy)
@@ -567,10 +595,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 mPhysicsWorld.destroyBody(body);
                 detachChild(enemy);
                 enemyList.remove(enemy);
+                if (playerDrop) {
+                    ResourceManager.getInstance().attackSound.play();
+                }
+                //Log.d("GameScene", "Removed enemy = " + enemyList.size());
             }
         });
     }
-
     private void destroyCoin(final Coin coin)
     {
         activity.runOnUpdateThread(new Runnable() {
@@ -581,7 +612,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(coin));
                 mPhysicsWorld.destroyBody(body);
                 detachChild(coin);
-                enemyList.remove(coin);
+                coinList.remove(coin);
+                if (playerDrop) {
+                    ResourceManager.getInstance().coinSound.play();
+                }
+
+                //Log.d("GameScene", "Removed coin = " + coinList.size());
             }
         });
     }

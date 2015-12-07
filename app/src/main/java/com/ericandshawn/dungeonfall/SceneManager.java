@@ -64,10 +64,9 @@ public class SceneManager {
         //ResourceManager.getInstance().activity.enableAccelerometer();
         //gameScene.registerUpdateHandler(ResourceManager.getInstance().activity.mPhysicsWorld);
         setScene(gameScene);
-        currentScene.createScene();
     }
 
-    public void setScene(SceneType mSceneType)
+    /*public void setScene(SceneType mSceneType)
     {
         switch (mSceneType)
         {
@@ -77,16 +76,10 @@ public class SceneManager {
             case SCENE_GAME:
                 setScene(gameScene);
                 break;
-            /*case SCENE_SPLASH:
-                setScene(splashScene);
-                break;
-            case SCENE_LOADING:
-                setScene(loadingScene);
-                break;*/
             default:
                 break;
         }
-    }
+    }*/
 
     //---------------------------------------------
     // GETTERS AND SETTERS

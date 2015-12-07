@@ -2,6 +2,10 @@ package com.ericandshawn.dungeonfall;
 
 import android.graphics.Typeface;
 
+import org.andengine.audio.music.Music;
+import org.andengine.audio.music.MusicFactory;
+import org.andengine.audio.sound.Sound;
+import org.andengine.audio.sound.SoundFactory;
 import org.andengine.engine.Engine;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -21,6 +25,8 @@ import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.util.color.Color;
 import org.andengine.util.debug.Debug;
+
+import java.io.IOException;
 
 /**
  * Created by Shawn on 11/17/2015.
@@ -68,6 +74,18 @@ public class ResourceManager {
     protected Font menuNameFont;
     protected ITexture hudFontTexture;
     protected Font hudNameFont;
+
+
+    // SOUNDS
+
+    protected Sound fireSound;
+    protected Sound hitSound;
+    protected Sound attackSound;
+    protected Sound lightningSound;
+    protected Sound dieSound;
+    protected Sound coinSound;
+    public Music bgMusic;
+
 
     public void loadMenuResources()
     {
@@ -179,10 +197,14 @@ public class ResourceManager {
 
     private void loadGameFonts()
     {
+
+        FontFactory.setAssetBasePath("font/");
         mainFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
         //font = FontFactory.createStrokeFromAsset(activity.getFontManager(), mainFontTexture, activity.getAssets(), "font.ttf", 50, true, Color.WHITE, 2, Color.BLACK);
         //menuNameFont = FontFactory.create(activity.getFontManager(), activity.getTextureManager(), 256, 256, Typeface.create(Typeface.DEFAULT, Typeface.NORMAL), 16, Color.BLACK);
-        menuNameFont = FontFactory.create(activity.getFontManager(),mainFontTexture,120,Color.WHITE_ARGB_PACKED_INT);
+        //menuNameFont = FontFactory.create(activity.getFontManager(),mainFontTexture,120,Color.WHITE_ARGB_PACKED_INT);
+        menuNameFont = FontFactory.createStrokeFromAsset(activity.getFontManager(), mainFontTexture, activity.getAssets(), "8BIT_WONDER.TTF", 75, true, Color.WHITE_ABGR_PACKED_INT, 2, Color.BLACK_ABGR_PACKED_INT);
+
 
         menuNameFont.load();
 
@@ -196,6 +218,26 @@ public class ResourceManager {
 
     private void loadGameAudio()
     {
+        SoundFactory.setAssetBasePath("mfx/");
+        try
+        {
+            fireSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"fireball.wav");
+            hitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt.wav");
+            attackSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"hit.wav");
+            lightningSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"lightning.wav");
+            coinSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"money.wav");
+            dieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell.wav");
+        }catch (final IOException e) {
+            Debug.e(e);
+        }
+
+        MusicFactory.setAssetBasePath("mfx/");
+        try {
+            bgMusic = MusicFactory.createMusicFromAsset(activity.getEngine().getMusicManager(), activity, "bgMusic.mp3");
+            bgMusic.setLooping(true);
+        } catch (final IOException e) {
+            Debug.e(e);
+        }
 
     }
 
