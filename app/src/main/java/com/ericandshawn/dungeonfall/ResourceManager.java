@@ -51,14 +51,17 @@ public class ResourceManager {
     private BuildableBitmapTextureAtlas gameTextureAtlas;
     private BuildableBitmapTextureAtlas hudTextureAtlas;
     private BuildableBitmapTextureAtlas storeTextureAtlas;
-    protected ITextureRegion player_region;
+    protected ITiledTextureRegion player_region;
     protected ITiledTextureRegion bat_region;
     protected ITiledTextureRegion gold_region;
     protected ITextureRegion platform_region;
     protected ITextureRegion spikedPlatform_region;
+    protected ITiledTextureRegion door_region;
     protected ITiledTextureRegion lives_region;
     protected ITiledTextureRegion mp_region;
     protected ITiledTextureRegion charge_region;
+    protected ITiledTextureRegion recharge_region;
+    protected ITiledTextureRegion blood_region;
     protected ITextureRegion store_region;
     protected ITextureRegion goldHud_region;
     protected ITextureRegion attackIncrease_region;
@@ -156,8 +159,8 @@ public class ResourceManager {
         game_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mBackgroundBitmapTextureAtlas, activity, "" + bg + ".png", 0, 0);
         mBackgroundBitmapTextureAtlas.load();
 
-        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),4096, 1024, TextureOptions.BILINEAR);
-        player_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "hero.png");
+        gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),8192, 2048, TextureOptions.BILINEAR);
+        player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "hero.png", 7, 1);
         bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png", 3, 1);
         gold_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "gold.png",8,1);
         platform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform.png");
@@ -165,6 +168,9 @@ public class ResourceManager {
         nextFloor_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "nextScreen.png");
         gameOver_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "gameover.png");
         charge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "charge.png", 12, 4);
+        recharge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "recharge.png", 12, 4);
+        blood_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bloodSheet.png", 6, 1);
+        door_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "door.png", 5, 1);
 
         try
         {

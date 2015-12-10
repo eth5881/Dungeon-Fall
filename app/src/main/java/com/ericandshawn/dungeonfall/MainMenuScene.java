@@ -77,6 +77,7 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         switch (pMenuItem.getID()){
             case MENU_PLAY:
                 SceneManager.getInstance().setGameScene();
+                ResourceManager.getInstance().bgMusic.play();
                 return true;
             case MENU_ABOUT:
                 System.exit(0);
