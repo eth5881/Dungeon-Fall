@@ -59,27 +59,10 @@ public class SceneManager {
     public void setGameScene(){
         ResourceManager.getInstance().loadGameResources();
 
-        gameScene = new GameScene(ResourceManager.getInstance().activity);
-        //adding Accelerometer through MainActivity
-        //ResourceManager.getInstance().activity.enableAccelerometer();
-        //gameScene.registerUpdateHandler(ResourceManager.getInstance().activity.mPhysicsWorld);
+        gameScene = new GameScene();
         setScene(gameScene);
     }
 
-    /*public void setScene(SceneType mSceneType)
-    {
-        switch (mSceneType)
-        {
-            case SCENE_MENU:
-                setScene(menuScene);
-                break;
-            case SCENE_GAME:
-                setScene(gameScene);
-                break;
-            default:
-                break;
-        }
-    }*/
 
     //---------------------------------------------
     // GETTERS AND SETTERS
@@ -90,10 +73,6 @@ public class SceneManager {
         return INSTANCE;
     }
 
-    /*public SceneType getCurrentSceneType()
-    {
-        return currentSceneType;
-    }*/
 
     public BaseScene getCurrentScene()
     {
