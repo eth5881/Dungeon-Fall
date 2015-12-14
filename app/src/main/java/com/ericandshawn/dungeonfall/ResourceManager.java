@@ -51,8 +51,6 @@ public class ResourceManager {
     private BuildableBitmapTextureAtlas gameTextureAtlas;
     private BuildableBitmapTextureAtlas hudTextureAtlas;
     private BuildableBitmapTextureAtlas storeTextureAtlas;
-    private BuildableBitmapTextureAtlas extraTextureAtlas;
-    private BuildableBitmapTextureAtlas chargeTextureAtlas;
     protected ITiledTextureRegion player_region;
     protected ITiledTextureRegion playerSelection_region;
     protected ITiledTextureRegion bat_region;
@@ -117,18 +115,15 @@ public class ResourceManager {
         loadGameFonts();
         loadGameAudio();
         loadStoreGraphics();
-        //loadExtraGraphics();
-        //loadChargedGraphics();
     }
     private void loadMenuGraphics()
     {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-        //menuTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
         menuTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
         menu_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "1.png");
         play_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "play.png");
         about_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "continue.png");
-        playerSelection_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(menuTextureAtlas, activity, "playerSpriteSelection.png", 3, 1);
+        playerSelection_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(menuTextureAtlas, activity, "playerSpriteSelection2.png", 3, 1);
 
 
         try
@@ -147,14 +142,11 @@ public class ResourceManager {
 
     }
     private void loadHudGraphics(){
-        hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
+        hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 512, TextureOptions.BILINEAR);
         lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "heartSheet.png", 5, 1);
         mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "mpSheet.png", 4, 1);
         store_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "storeButton.png", 2, 1);
         goldHud_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "goldHud.png");
-
-
-        //this.hudTextureAtlas.load();
 
         try
         {
@@ -202,41 +194,6 @@ public class ResourceManager {
         }
     }
 
-    /*private void loadExtraGraphics(){
-        extraTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),4096, 1024, TextureOptions.BILINEAR);
-        nextFloor_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(extraTextureAtlas, activity, "nextScreen.png");
-        gameOver_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(extraTextureAtlas, activity, "gameover.png");
-        blood_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(extraTextureAtlas, activity, "bloodSheet.png", 6, 1);
-        door_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(extraTextureAtlas, activity, "door.png", 5, 1);
-
-
-        try
-        {
-            this.extraTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 0));
-            this.extraTextureAtlas.load();
-        }
-        catch (final ITextureAtlasBuilder.TextureAtlasBuilderException e)
-        {
-            Debug.e(e);
-        }
-    }*/
-
-    /*private void loadChargedGraphics(){
-        chargeTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),4096, 2048, TextureOptions.BILINEAR);
-        charge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(chargeTextureAtlas, activity, "charge.png", 12, 4);
-        recharge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(chargeTextureAtlas, activity, "recharge.png", 12, 4);
-
-
-        try
-        {
-            this.chargeTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 0));
-            this.chargeTextureAtlas.load();
-        }
-        catch (final ITextureAtlasBuilder.TextureAtlasBuilderException e)
-        {
-            Debug.e(e);
-        }
-    }*/
     private void loadStoreGraphics(){
         storeTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),512, 512, TextureOptions.BILINEAR);
         attackIncrease_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(storeTextureAtlas, activity, "increaseAttack_Button.png", 2, 1);

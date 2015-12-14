@@ -105,7 +105,7 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
     private void createCharacterSelection() {
 
         numChosen=0;
-        chracterSelection = new AnimatedSprite(MainActivity.CAMERA_WIDTH/2-50, MainActivity.CAMERA_HEIGHT/3 + 150, ResourceManager.getInstance().playerSelection_region, vbom) {
+        chracterSelection = new AnimatedSprite(MainActivity.CAMERA_WIDTH/2 - 150, MainActivity.CAMERA_HEIGHT/3, ResourceManager.getInstance().playerSelection_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent touchevent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -123,7 +123,16 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
                         x2 = touchevent.getX();
 
                         //if left to right sweep event on screen
-                        //DOING IT TWICE (OPPOSITE)
+                        if (x1 > x2) {
+                            numChosen -= 1;
+                            chracterSelection.setCurrentTileIndex(numChosen);
+                            if (chracterSelection.getCurrentTileIndex() < 0) {
+                                chracterSelection.setCurrentTileIndex(2);
+                                numChosen = 2;
+                            }
+                        }
+
+                        // if right to left sweep event on screen
                         if (x1 < x2) {
                             numChosen += 1;
                             chracterSelection.setCurrentTileIndex(numChosen);
@@ -133,23 +142,13 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
                                 numChosen = 0;
                             }
                         }
-
-                        // if right to left sweep event on screen
-                        if (x1 > x2) {
-                            numChosen -= 1;
-                            chracterSelection.setCurrentTileIndex(numChosen);
-                            if (chracterSelection.getCurrentTileIndex() < 0) {
-                                chracterSelection.setCurrentTileIndex(2);
-                                numChosen = 2;
-                            }
-                        }
                     }
                      break;
                 }
                 return false;
             }
         };
-        chracterSelection.setScale(8,8);
+        chracterSelection.setScale(2.6f,2.6f);
         registerTouchArea(chracterSelection);
         chracterSelection.setCurrentTileIndex(0);
         attachChild(chracterSelection);

@@ -96,14 +96,13 @@ public class MainActivity extends BaseGameActivity {
         super.onDestroy();
         System.exit(0);
         if (isGameLoaded())
-            ResourceManager.getInstance().bgMusic.pause();
+            ResourceManager.getInstance().bgMusic.stop();
     }
     @Override
     protected void onPause(){
         super.onPause();
         if (isGameLoaded())
             ResourceManager.getInstance().bgMusic.pause();
-            //disableAccelerationSensor();
     }
 
     @Override
@@ -112,7 +111,6 @@ public class MainActivity extends BaseGameActivity {
         System.gc();
         if (isGameLoaded())
             ResourceManager.getInstance().bgMusic.play();
-            //enableAccelerationSensor();
     }
     // If the player hits the back button, quit the app
     public boolean onKeyDown(int keyCode, KeyEvent event) {

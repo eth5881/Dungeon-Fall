@@ -54,8 +54,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
 
     private Hero player;
-    private Body playerBody;
-
     private Sprite mBg;
 
     private ArrayList<Coin> coinList;
@@ -81,12 +79,10 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
     private AnimatedSprite mBlood;
 
     private Sprite closeStoreButton;
-
     private AnimatedSprite mLivesButton;
     private AnimatedSprite mAttackButton;
     private AnimatedSprite mDefenseButton;
     private AnimatedSprite mMpButton;
-    private AnimatedSprite testPlayer;
 
 
     Text coinText;
@@ -131,7 +127,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         makeNextScreen();
         makeGameOverScene();
         attackDisabled = false;
-        activity.getEngine().enableAccelerationSensor(activity,this);
+        //activity.getEngine().enableAccelerationSensor(activity,this);
 
     }
 
@@ -146,8 +142,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mPhysicsWorld.setContactListener(createContactListener());
 
         //making sure hero doesn't go off screen
-        final Rectangle left = new Rectangle(0, 0, 0, MainActivity.CAMERA_HEIGHT, vbom);
-        final Rectangle right = new Rectangle(MainActivity.CAMERA_WIDTH, 0, 2, MainActivity.CAMERA_HEIGHT, vbom);
+        final Rectangle left = new Rectangle(0, -200, 0, MainActivity.CAMERA_HEIGHT  + 200, vbom);
+        final Rectangle right = new Rectangle(MainActivity.CAMERA_WIDTH, -200, 2, MainActivity.CAMERA_HEIGHT + 200, vbom);
 
         final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
         PhysicsFactory.createBoxBody(mPhysicsWorld, left, BodyDef.BodyType.StaticBody, wallFixtureDef);
@@ -223,6 +219,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         if (mPhysicsWorld != null) {
             if (pSceneTouchEvent.isActionDown() && !playerDrop && !isDead) {
                 addPlayer(pSceneTouchEvent.getX(), -150);
+                activity.getEngine().enableAccelerationSensor(activity, this);
                 return true;
 
             }
@@ -368,13 +365,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
         //Detach the store while running through level
         detachChild(mStore);
+        unregisterTouchArea(mStore);
 
-        mCharge = createAnimatedSprite(100, 1050, ResourceManager.getInstance().charge_region, vbom);
+        //Set the actual position of sprites in onUpdate()
+        mCharge = createAnimatedSprite(-100, -500, ResourceManager.getInstance().charge_region, vbom);
         mCharge.setScale(2.2f, 2.2f);
         attachChild(mCharge);
         mCharge.animate(20);
 
-        mRecharge = createAnimatedSprite(100, 1050, ResourceManager.getInstance().recharge_region, vbom);
+        mRecharge = createAnimatedSprite(-100, -500, ResourceManager.getInstance().recharge_region, vbom);
         mRecharge.setScale(2.2f,2.2f);
         attachChild(mRecharge);
         mRecharge.animate(40);
@@ -393,13 +392,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         for(int i=0;i<12;i++){
             if (Math.random() < 0.5) {
                 //add bat
-                int randX = (int) (Math.random() * 900);
+                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -100);
                 int randY = (int) (Math.random() * 1700);
-                if(randX < 50){
-                    randX = randX + 50;
-                }
-                if(randX > 850){
-                    randX = randX - 50;
+                if(randX < 100){
+                    if(randX < 0){
+                        randX += 200;
+                    }
+                    randX += 100;
                 }
                 if(randY < 400){
                     randY = randY + 200;
@@ -412,13 +411,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 enemyNum++;
             }else if (Math.round(Math.random() * 10) >= 8) {
                 //add platform
-                int randX = (int) (Math.random() * 900);
+                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -150);
                 int randY = (int) (Math.random() * 1700);
-                if(randX < 50){
-                    randX = randX + 50;
-                }
-                if(randX > 850){
-                    randX = randX - 50;
+                if(randX < 150){
+                    if(randX < 0){
+                        randX += 300;
+                    }
+                    randX += 150;
                 }
                 if(randY < 400){
                     randY = randY + 200;
@@ -431,13 +430,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 platNum++;
             } else if (Math.round(Math.random() * 10) >= 9) {
                 //add platform with stakes
-                int randX = (int) (Math.random() * 900);
+                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -150);
                 int randY = (int) (Math.random() * 1700);
-                if(randX < 50){
-                    randX = randX + 50;
-                }
-                if(randX > 850){
-                    randX = randX - 50;
+                if(randX < 150){
+                    if(randX < 0){
+                        randX += 300;
+                    }
+                    randX += 150;
                 }
                 if(randY < 400){
                     randY = randY + 200;
@@ -450,13 +449,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                 spNum++;
             } else {
                 //add gold
-                int randX = (int) (Math.random() * 900);
+                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -50);
                 int randY = (int) (Math.random() * 1700);
                 if(randX < 50){
-                    randX = randX + 50;
-                }
-                if(randX > 850){
-                    randX = randX - 50;
+                    if(randX < 0){
+                        randX += 100;
+                    }
+                    randX += 50;
                 }
                 if(randY < 400){
                     randY = randY + 200;
@@ -761,7 +760,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
 private ContactListener createContactListener()
         {
-        ContactListener contactListener = new ContactListener()
+        ContactListener
+                contactListener = new ContactListener()
         {
 @Override
 public void beginContact(Contact contact)
@@ -827,6 +827,9 @@ final Body body2 = x2.getBody();
 @Override
 public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
         mBlood.setVisible(false);
+        detachChild(mBlood);
+        mBlood.dispose();
+
         }
 @Override
 public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
@@ -1022,6 +1025,8 @@ public void postSolve(Contact contact, ContactImpulse impulse)
         });
     }
     public void cleanScene(){
+
+
         if(enemyList.size()>0) {
             for (int i = 0; i < enemyList.size(); i++) {
                 destroyEnemy(enemyList.get(i));
@@ -1042,6 +1047,12 @@ public void postSolve(Contact contact, ContactImpulse impulse)
                 destroySpikedPlatforms(spikedPlatformList.get(i));
             }
         }
+        if(levelItems.size()>0) {
+            for (int i = 0; i < levelItems.size(); i++) {
+                //(levelItems.get(i));
+            }
+        }
+
 
         enemyList.clear();
         coinList.clear();
@@ -1059,6 +1070,11 @@ public void postSolve(Contact contact, ContactImpulse impulse)
         detachChild(floorText);
         detachChild(expText);
         detachChild(mpText);
+        detachChild(mCharge);
+        detachChild(mRecharge);
+        detachChild(mNextScreen);
+
+
         mStore.dispose();
         mGoldHud.dispose();
         mMp.dispose();
@@ -1068,6 +1084,11 @@ public void postSolve(Contact contact, ContactImpulse impulse)
         floorText.dispose();
         expText.dispose();
         mpText.dispose();
+        mCharge.dispose();
+        mRecharge.dispose();
+        mNextScreen.dispose();
+
+
     }
     private void restartGame(){
         floor = 1;
