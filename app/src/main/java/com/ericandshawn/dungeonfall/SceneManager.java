@@ -1,7 +1,9 @@
 package com.ericandshawn.dungeonfall;
 
 import org.andengine.engine.Engine;
+import org.andengine.entity.scene.background.Background;
 import org.andengine.ui.IGameInterface;
+import org.andengine.util.color.Color;
 
 /**
  * Created by Shawn on 11/17/2015.
@@ -11,30 +13,16 @@ public class SceneManager {
     // SCENES
     //---------------------------------------------
 
-    private BaseScene splashScene;
     private BaseScene menuScene;
     private BaseScene gameScene;
-    private BaseScene mStoreScene;
 
     //---------------------------------------------
     // VARIABLES
     //---------------------------------------------
 
     private static final SceneManager INSTANCE = new SceneManager();
-
-    //private SceneType currentSceneType = SceneType.SCENE_MENU;
-
     private BaseScene currentScene;
-
     private Engine engine = ResourceManager.getInstance().engine;
-
-    public enum SceneType
-    {
-        //SCENE_SPLASH,
-        SCENE_MENU,
-        SCENE_GAME,
-        //SCENE_LOADING,
-    }
 
     //---------------------------------------------
     // CLASS LOGIC
@@ -47,7 +35,13 @@ public class SceneManager {
         }
         engine.setScene(scene);
         currentScene = scene;
-        //currentSceneType = scene.getSceneType();
+
+    }
+    //When click on home button on GameOver Scene
+    public void resetGame(){
+        ResourceManager.getInstance().loadMenuResources();
+        menuScene = new MainMenuScene();
+        setScene(menuScene);
     }
    public void setMenuScene(IGameInterface.OnCreateSceneCallback cb){
        ResourceManager.getInstance().loadMenuResources();
@@ -58,7 +52,6 @@ public class SceneManager {
    }
     public void setGameScene(){
         ResourceManager.getInstance().loadGameResources();
-
         gameScene = new GameScene();
         setScene(gameScene);
     }
@@ -72,8 +65,6 @@ public class SceneManager {
     {
         return INSTANCE;
     }
-
-
     public BaseScene getCurrentScene()
     {
         return currentScene;

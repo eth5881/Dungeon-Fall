@@ -38,19 +38,26 @@ public class ResourceManager {
     public Camera camera;
     public VertexBufferObjectManager vbom;
 
-    //IMAGES
+    //Get player selected
+    public int playerChosen;
 
-    public BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
 
-    public ITextureRegion menu_background_region;
-    protected ITextureRegion game_background_region;
-    public ITextureRegion play_button_region;
-    public ITextureRegion about_button_region;
-
+    //Bitmap Texture Atlas
     private BuildableBitmapTextureAtlas menuTextureAtlas;
     private BuildableBitmapTextureAtlas gameTextureAtlas;
     private BuildableBitmapTextureAtlas hudTextureAtlas;
     private BuildableBitmapTextureAtlas storeTextureAtlas;
+    public BitmapTextureAtlas mBackgroundBitmapTextureAtlas;
+
+    //Main Menu Textures
+    public ITextureRegion menu_background_region;
+    protected ITextureRegion about_background_region;
+    protected ITextureRegion game_background_region;
+    public ITextureRegion play_button_region;
+    public ITextureRegion about_button_region;
+    protected ITextureRegion closeAbout_region;
+
+    //Game Textures
     protected ITiledTextureRegion player_region;
     protected ITiledTextureRegion playerSelection_region;
     protected ITiledTextureRegion bat_region;
@@ -63,49 +70,49 @@ public class ResourceManager {
     protected ITiledTextureRegion charge_region;
     protected ITiledTextureRegion recharge_region;
     protected ITiledTextureRegion blood_region;
-
     protected ITextureRegion goldHud_region;
-
     protected ITextureRegion nextFloor_region;
-    protected ITextureRegion gameOver_region;
 
-    //STORE
+    //Game Over Textures
+    protected ITextureRegion gameOver_region;
+    protected ITextureRegion replay_region;
+    protected ITextureRegion home_region;
+
+    //Store Textures
     protected ITiledTextureRegion attackIncrease_region;
     protected ITiledTextureRegion addLife_region;
     protected ITiledTextureRegion defenseIncrease_region;
     protected ITiledTextureRegion addMp_region;
     protected ITiledTextureRegion store_region;
     protected ITextureRegion closeStore_region;
-    //protected ITextureRegion storeBackground_region;
-
-
 
 
     //FONTS
-
     protected ITexture mainFontTexture;
     protected Font menuNameFont;
     protected ITexture hudFontTexture;
     protected Font hudNameFont;
 
 
-    // SOUNDS
-
+    //SOUNDS
     protected Sound fireSound;
-    protected Sound hitSound;
+    protected Sound wHitSound;
+    protected Sound mHitSound;
+    protected Sound aHitSound;
     protected Sound attackSound;
     protected Sound lightningSound;
-    protected Sound dieSound;
+    protected Sound wDieSound;
+    protected Sound mDieSound;
+    protected Sound aDieSound;
     protected Sound coinSound;
     public Music bgMusic;
 
-    public int playerChoosen;
+
 
 
     public void loadMenuResources()
     {
         loadMenuGraphics();
-        loadMenuAudio();
         loadGameFonts();
     }
     public void loadGameResources()
@@ -121,10 +128,11 @@ public class ResourceManager {
         BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
         menuTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 1024, TextureOptions.BILINEAR);
         menu_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "1.png");
+        about_background_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "8.png");
         play_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "play.png");
-        about_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "continue.png");
+        about_button_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "about.png");
         playerSelection_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(menuTextureAtlas, activity, "playerSpriteSelection2.png", 3, 1);
-
+        closeAbout_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(menuTextureAtlas, activity, "closeButton.png");
 
         try
         {
@@ -137,10 +145,6 @@ public class ResourceManager {
         }
     }
 
-    private void loadMenuAudio()
-    {
-
-    }
     private void loadHudGraphics(){
         hudTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),1024, 512, TextureOptions.BILINEAR);
         lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "heartSheet.png", 5, 1);
@@ -179,6 +183,8 @@ public class ResourceManager {
         recharge_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "recharge.png", 12, 4);
         nextFloor_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "nextScreen.png");
         gameOver_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "gameover.png");
+        replay_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "replay.png");
+        home_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "home.png");
         blood_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bloodSheet.png", 6, 1);
         door_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "door.png", 5, 1);
 
@@ -201,8 +207,6 @@ public class ResourceManager {
         addLife_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(storeTextureAtlas, activity, "heartButton.png",2,1);
         addMp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(storeTextureAtlas, activity, "mpButton.png", 2, 1);
         closeStore_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "closeButton.png");
-        //storeBackground_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(storeTextureAtlas, activity, "store.png");
-
 
         try
         {
@@ -225,9 +229,7 @@ public class ResourceManager {
         menuNameFont.load();
 
         hudFontTexture = new BitmapTextureAtlas(activity.getTextureManager(), 256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-        //hudNameFont = FontFactory.create(activity.getFontManager(), hudFontTexture, 35, Color.WHITE_ABGR_PACKED_INT);
         hudNameFont = FontFactory.createStrokeFromAsset(activity.getFontManager(), mainFontTexture, activity.getAssets(), "8BIT_WONDER.TTF", 30, true, Color.WHITE_ABGR_PACKED_INT, 3, Color.BLACK_ABGR_PACKED_INT);
-
         hudNameFont.load();
 
     }
@@ -238,11 +240,16 @@ public class ResourceManager {
         try
         {
             fireSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"fireball.wav");
-            hitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt.wav");
+            wHitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt.wav");
+            mHitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt2.wav");
+            aHitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt3.wav");
             attackSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"hit.wav");
             lightningSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"lightning.wav");
             coinSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"money.wav");
-            dieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell.wav");
+            wDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell.wav");
+            mDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell2.wav");
+            aDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell3.wav");
+
         }catch (final IOException e) {
             Debug.e(e);
         }
@@ -256,16 +263,6 @@ public class ResourceManager {
         }
 
     }
-
-    public void loadSplashScreen()
-    {
-
-    }
-
-    public void unloadSplashScreen()
-    {
-
-    }
     public void unloadMenuResources(){
         menuTextureAtlas.unload();
         menuTextureAtlas = null;
@@ -274,14 +271,18 @@ public class ResourceManager {
     public void unloadGameResources(){
         gameTextureAtlas.unload();
         gameTextureAtlas = null;
+        storeTextureAtlas.unload();
+        storeTextureAtlas = null;
+        hudTextureAtlas.unload();
+        hudTextureAtlas = null;
 
     }
 
     public void setPlayerChosen(int mPlayerChosen){
-        playerChoosen = mPlayerChosen;
+        playerChosen = mPlayerChosen;
     }
     public int getPlayerChosen(){
-        return playerChoosen;
+        return playerChosen;
     }
 
 

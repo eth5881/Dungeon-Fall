@@ -38,6 +38,7 @@ import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObject;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
+import org.andengine.ui.IGameInterface;
 import org.andengine.util.HorizontalAlign;
 import org.andengine.util.color.Color;
 
@@ -47,68 +48,82 @@ import java.util.ArrayList;
 /**
  * Created by Shawn on 11/18/2015.
  */
-public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccelerationListener {
+public class GameScene extends BaseScene implements IOnSceneTouchListener, IAccelerationListener {
 
-    private HUD gameHUD;
     private PhysicsWorld mPhysicsWorld;
 
+    //Scenes
+    private Scene mStoreScene;
+    private Scene mNextScreenScene;
+    private Scene mGameOverScene;
+    private HUD gameHUD;
 
-    private Hero player;
-    private Sprite mBg;
-
-    private ArrayList<Coin> coinList;
-    private ArrayList<Enemy> enemyList;
-    private ArrayList<GameObject> platformList;
-    private ArrayList<GameObject> spikedPlatformList;
-    private ArrayList<Sprite> levelItems;
-
-    private boolean playerDrop = false;
-    private boolean isAttacking = false;
-    private boolean attackDisabled = false;
-    private boolean isDead = false;
+    //Array Lists
+    private ArrayList <Coin> coinList;
+    private ArrayList <Enemy> enemyList;
+    private ArrayList <GameObject> platformList;
+    private ArrayList <GameObject> spikedPlatformList;
+    private ArrayList <Sprite> levelItems;
 
     //HUD Sprites
     private AnimatedSprite mStore;
     private Sprite mGoldHud;
     private AnimatedSprite mMp;
     private AnimatedSprite mLives;
-    private Sprite mNextScreen;
-    private Sprite mGameOverScreen;
-    private AnimatedSprite mCharge;
-    private AnimatedSprite mRecharge;
-    private AnimatedSprite mBlood;
 
+    //Store Buttons
     private Sprite closeStoreButton;
     private AnimatedSprite mLivesButton;
     private AnimatedSprite mAttackButton;
     private AnimatedSprite mDefenseButton;
     private AnimatedSprite mMpButton;
 
+    //Game Sprites
+    private AnimatedSprite mCharge;
+    private AnimatedSprite mRecharge;
+    private AnimatedSprite mBlood;
+    private Hero player;
+    private Sprite mBg;
 
+    //NextScene Sprites
+    private Sprite mNextScreen;
+
+    //GameOver Scene Sprites
+    private Sprite mGameOverScreen;
+    private Sprite mReplayButton;
+    private Sprite mHomeButton;
+
+    //Text
     Text coinText;
     Text levelText;
     Text floorText;
     Text expText;
     Text mpText;
+    Text warningText;
 
-
-
+    //Game Values
     private int floor = 1;
     private int goldAmount = 0;
     private long exp = 0;
     private long level = 1;
     private int lives = 2;
 
+    //HUD Values
     private int maxLives = 4;
     private int mp = 1;
     private int defense = 1;
     private int attack = 1;
     private int selectedPlayer;
 
+    private boolean playerDrop = false;
+    private boolean isAttacking = false;
+    private boolean attackDisabled = false;
+    private boolean isDead = false;
 
-    private Scene mStoreScene;
-    private Scene mNextScreenScene;
-    private Scene mGameOverScene;
+
+    // ===========================================================
+    // Methods
+    // ===========================================================
 
     @Override
     public void createScene() {
@@ -116,33 +131,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         setOnSceneTouchListener(this);
         resetScene();
     }
-
+    //Called on first load and when "replay" button is pressed on GameOver Scene
     public void resetScene() {
         setBackground(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240);
         playerDrop = false;
         createHUD();
         addFloorItems();
         setOverlap();
-        //makeStoreScene();
         makeNextScreen();
         makeGameOverScene();
         attackDisabled = false;
-        //activity.getEngine().enableAccelerationSensor(activity,this);
-
     }
-
-
-
-
-
-
     private void createPhysics() {
         registerUpdateHandler(new FPSLogger());
-        mPhysicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, SensorManager.GRAVITY_EARTH),false);
+        mPhysicsWorld = new FixedStepPhysicsWorld(60, new Vector2(0, SensorManager.GRAVITY_EARTH), false);
         mPhysicsWorld.setContactListener(createContactListener());
 
         //making sure hero doesn't go off screen
-        final Rectangle left = new Rectangle(0, -200, 0, MainActivity.CAMERA_HEIGHT  + 200, vbom);
+        final Rectangle left = new Rectangle(0, -200, 0, MainActivity.CAMERA_HEIGHT + 200, vbom);
         final Rectangle right = new Rectangle(MainActivity.CAMERA_WIDTH, -200, 2, MainActivity.CAMERA_HEIGHT + 200, vbom);
 
         final FixtureDef wallFixtureDef = PhysicsFactory.createFixtureDef(0, 0.5f, 0.5f);
@@ -154,8 +160,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
         registerUpdateHandler(mPhysicsWorld);
         registerUpdateHandler(new IUpdateHandler() {
-            public void reset() {
-            }
+            public void reset() {}
 
             public void onUpdate(float pSecondsElapsed) {
                 //Game loop
@@ -169,16 +174,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                         setChildScene(mNextScreenScene, false, true, true);
                         activity.getEngine().disableAccelerationSensor(activity);
                     }
-                    if(isAttacking && !attackDisabled){
+                    if (isAttacking && !attackDisabled) {
                         mCharge.setVisible(true);
+                        //Attach Charge to player
                         mCharge.setX((player.getX()) - (player.getWidth() + 5));
                         mCharge.setY((player.getY()) - (player.getHeight() - 45));
-                    }else if(attackDisabled){
+                    } else if (attackDisabled) {
                         mCharge.setVisible(false);
                         mRecharge.setVisible(true);
+                        //Attach Recharge to Player
                         mRecharge.setX((player.getX()) - (player.getWidth() + 5));
                         mRecharge.setY((player.getY()) - (player.getHeight() - 45));
-                    }else{
+                    } else {
 
                         mCharge.setVisible(false);
                         mRecharge.setVisible(false);
@@ -199,39 +206,48 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                         spikedPlatformList.get(x).body.setUserData(spikedString);
                     }
                 }
-
-                if(isDead){
+                //Game Over - no more lives
+                if (isDead) {
                     mPhysicsWorld.destroyBody(player.body);
                     player.detachSelf();
                     player.dispose();
                     playerDrop = false;
-                    ResourceManager.getInstance().dieSound.play();
+                    if (selectedPlayer == 0) {
+                        ResourceManager.getInstance().wDieSound.play();
+                    }
+                    if (selectedPlayer == 1) {
+                        ResourceManager.getInstance().aDieSound.play();
+                    }
+                    if (selectedPlayer == 2) {
+                        ResourceManager.getInstance().mDieSound.play();
+                    }
                     setChildScene(mGameOverScene, false, true, true);
+                    ResourceManager.getInstance().bgMusic.stop();
                 }
             }
         });
     }
 
-
-
+    //Creates player to fall and starts level. Creates charges on player
     @Override
     public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
         if (mPhysicsWorld != null) {
+            //Create player to fall from top of screen wherever use touched on screen
             if (pSceneTouchEvent.isActionDown() && !playerDrop && !isDead) {
                 addPlayer(pSceneTouchEvent.getX(), -150);
                 activity.getEngine().enableAccelerationSensor(activity, this);
                 return true;
 
             }
-            if(pSceneTouchEvent.isActionDown() && !attackDisabled){
-                mCharge.animate(20, 0, new AnimatedSprite.IAnimationListener() {
-                    @Override
-                    public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-                        attackDisabled = true;
-                        isAttacking = false;
-                        mCharge.stopAnimation();
-                        playDisableAttack();
-                    }
+            if (pSceneTouchEvent.isActionDown() && !attackDisabled) {
+                //Run Charge Animation
+                mCharge.animate(20, 0, new AnimatedSprite.IAnimationListener() {@Override
+                                                                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                    attackDisabled = true;
+                    isAttacking = false;
+                    mCharge.stopAnimation();
+                    playDisableAttack();
+                }
 
                     @Override
                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
@@ -254,28 +270,49 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
                     }
                 });
             }
-            if(pSceneTouchEvent.isActionUp() && playerDrop){
+            if (pSceneTouchEvent.isActionUp() && playerDrop) {
                 isAttacking = false;
                 mCharge.stopAnimation();
             }
         }
         return false;
     }
+    //Recharge Sprite Animation
+    private void playDisableAttack() {
+        mRecharge.animate(40, 0, new AnimatedSprite.IAnimationListener() {@Override
+                                                                          public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+            attackDisabled = false;
+            mRecharge.stopAnimation();
+        }
 
+            @Override
+            public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+                                           int pInitialLoopCount) {
+                // TODO Auto-generated method stub
 
+            }
 
-    // ===========================================================
-    // Methods
-    // ===========================================================
+            @Override
+            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+                                                int pOldFrameIndex, int pNewFrameIndex) {
+                // TODO Auto-generated method stub
 
-    private void setBackground(final float pX, final float pY){
+            }
+
+            @Override
+            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+                                                int pRemainingLoopCount, int pInitialLoopCount) {}
+        });
+    }
+
+    private void setBackground(final float pX, final float pY) {
         mBg = createSprite(pX, pY, ResourceManager.getInstance().game_background_region, vbom);
         mBg.setScale(4, 4);
         attachChild(mBg);
     }
-    private void createHUD(){
-
-        if(floor<1){
+    private void createHUD() {
+        //For first level set all values
+        if (floor < 1) {
             floor = 1;
             goldAmount = 0;
             exp = 1;
@@ -286,84 +323,82 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             attack = 1;
         }
 
-            gameHUD = new HUD();
-            int textLength = 4;
-            // Draw the hud
-            levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
-            //levelText.setColor(Color.BLACK);
-            levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 + 165, 115);
-            attachChild(levelText);
+        gameHUD = new HUD();
+        int textLength = 4;
 
-            floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
-            floorText.setPosition(20, 115);
-            attachChild(floorText);
+        // Draw the hud
+        levelText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Level: " + level, new TextOptions(HorizontalAlign.LEFT), vbom);
+        //levelText.setColor(Color.BLACK);
+        levelText.setPosition(MainActivity.CAMERA_WIDTH / 2 + 165, 115);
+        attachChild(levelText);
 
-            expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
-            expText.setPosition(MainActivity.CAMERA_WIDTH - 190, 115);
-            attachChild(expText);
+        floorText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
+        floorText.setPosition(20, 115);
+        attachChild(floorText);
 
-            mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
-            mpText.setPosition((MainActivity.CAMERA_WIDTH / 2) + 145, 40);
-            attachChild(mpText);
+        expText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Exp: " + exp, new TextOptions(HorizontalAlign.LEFT), vbom);
+        expText.setPosition(MainActivity.CAMERA_WIDTH - 190, 115);
+        attachChild(expText);
 
+        mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+        mpText.setPosition((MainActivity.CAMERA_WIDTH / 2) + 145, 40);
+        attachChild(mpText);
 
-            coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
-            coinText.setPosition(340, 115);
-            attachChild(coinText);
+        coinText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, String.valueOf(goldAmount), textLength, new TextOptions(HorizontalAlign.LEFT), vbom);
+        coinText.setPosition(340, 115);
+        attachChild(coinText);
 
-            mGoldHud = createSprite(290, 120, ResourceManager.getInstance().goldHud_region, vbom);
-            mGoldHud.setScale(3, 3);
-            attachChild(mGoldHud);
+        mGoldHud = createSprite(290, 120, ResourceManager.getInstance().goldHud_region, vbom);
+        mGoldHud.setScale(3, 3);
+        attachChild(mGoldHud);
 
+        //Animated Sprites
+        mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH / 2 + 350, 40, ResourceManager.getInstance().mp_region, vbom);
+        mMp.setCurrentTileIndex(mp);
+        mMp.setScale(3, 3);
+        attachChild(mMp);
 
-
-
-            mStore = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {
-
-                @Override
-                public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                    makeStoreScene();
-                    setChildScene(mStoreScene, false, true, true);
-                    return true;
-                }
-            };
-            mStore.setScale(3, 3);
+        mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
+        mLives.setCurrentTileIndex(lives);
+        mLives.setScale(3, 3);
+        attachChild(mLives);
 
 
-            //CALL FUNCTION TO DO THIS
-            if(goldAmount < 25) {
-                mStore.setCurrentTileIndex(0);
-            }
-            else{
-                mStore.setCurrentTileIndex(1);
-            }
-            registerTouchArea(mStore);
-            attachChild(mStore);
+        //Create Store Button for StoreScene
+        mStore = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {@Override
+                                                                                                                                                          public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+            makeStoreScene();
+            setChildScene(mStoreScene, false, true, true);
+            return true;
+        }
+        };
+        mStore.setScale(3, 3);
 
+        // If you have less than 25 coins, display 50% opacity sprite
+        if (goldAmount < 25) {
+            mStore.setCurrentTileIndex(0);
+        }
+        //If you have enough coins to use Store(25 or more), display 100% opacity sprite
+        else {
+            mStore.setCurrentTileIndex(1);
+        }
+        registerTouchArea(mStore);
+        attachChild(mStore);
 
-            mMp = createAnimatedSprite(MainActivity.CAMERA_WIDTH / 2 + 350, 40, ResourceManager.getInstance().mp_region, vbom);
-            mMp.setCurrentTileIndex(mp);
-            mMp.setScale(3, 3);
-            attachChild(mMp);
-
-            mLives = createAnimatedSprite(120, 40, ResourceManager.getInstance().lives_region, vbom);
-            mLives.setCurrentTileIndex(lives);
-            mLives.setScale(3, 3);
-            attachChild(mLives);
-
-            camera.setHUD(gameHUD);
+        //Set HUD
+        camera.setHUD(gameHUD);
     }
 
     private void addPlayer(final float pX, final float pY) {
         playerDrop = true;
         player = new Hero(pX, pY, ResourceManager.getInstance().player_region, vbom, mPhysicsWorld, this, "player", 3, 3);
 
-        //Get player selected from home screen
+        //Get player selected from MainMenu Scene
         selectedPlayer = ResourceManager.getInstance().getPlayerChosen();
         //Change Sprite Tile to match Image selected
         player.setCurrentTileIndex(selectedPlayer);
 
-        //Detach the store while running through level
+        //Detach the store sprite while running through level
         detachChild(mStore);
         unregisterTouchArea(mStore);
 
@@ -374,93 +409,95 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mCharge.animate(20);
 
         mRecharge = createAnimatedSprite(-100, -500, ResourceManager.getInstance().recharge_region, vbom);
-        mRecharge.setScale(2.2f,2.2f);
+        mRecharge.setScale(2.2f, 2.2f);
         attachChild(mRecharge);
         mRecharge.animate(40);
     }
 
-    private void addFloorItems(){
-        coinList = new ArrayList<>();
-        enemyList = new ArrayList<>();
-        platformList = new ArrayList<>();
-        spikedPlatformList = new ArrayList<>();
-        levelItems = new ArrayList<>();
+    private void addFloorItems() {
+        coinList = new ArrayList < > ();
+        enemyList = new ArrayList < > ();
+        platformList = new ArrayList < > ();
+        spikedPlatformList = new ArrayList < > ();
+        levelItems = new ArrayList < > ();
         int enemyNum = 0;
         int platNum = 0;
         int spNum = 0;
         int coinNum = 0;
-        for(int i=0;i<12;i++){
+        for (int i = 0; i < 12; i++) {
             if (Math.random() < 0.5) {
                 //add bat
-                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -100);
-                int randY = (int) (Math.random() * 1700);
-                if(randX < 100){
-                    if(randX < 0){
+                int randX = (int)(Math.random() * MainActivity.CAMERA_WIDTH - 100);
+                int randY = (int)(Math.random() * 1700);
+                if (randX < 100) {
+                    if (randX < 0) {
                         randX += 200;
                     }
                     randX += 100;
                 }
-                if(randY < 400){
+                if (randY < 400) {
                     randY = randY + 200;
                 }
-                if(randY > 1650){
+                if (randY > 1650) {
                     randY = randY - 50;
                 }
                 enemyList.add(new Enemy(randX, randY, ResourceManager.getInstance().bat_region, vbom, mPhysicsWorld, this, "", 3, 3, 100));
                 levelItems.add(enemyList.get(enemyNum));
                 enemyNum++;
-            }else if (Math.round(Math.random() * 10) >= 8) {
+            } else if (Math.round(Math.random() * 10) >= 8) {
                 //add platform
-                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -150);
-                int randY = (int) (Math.random() * 1700);
-                if(randX < 150){
-                    if(randX < 0){
+                int randX = (int)(Math.random() * MainActivity.CAMERA_WIDTH - 150);
+                int randY = (int)(Math.random() * 1700);
+                if (randX < 150) {
+                    if (randX < 0) {
                         randX += 300;
                     }
                     randX += 150;
                 }
-                if(randY < 400){
+                if (randY < 400) {
                     randY = randY + 200;
                 }
-                if(randY > 1650){
+                if (randY > 1650) {
                     randY = randY - 50;
                 }
                 platformList.add(new GameObject(randX, randY, ResourceManager.getInstance().platform_region, vbom, mPhysicsWorld, this, "", 3, 3));
                 levelItems.add(platformList.get(platNum));
                 platNum++;
             } else if (Math.round(Math.random() * 10) >= 9) {
-                //add platform with stakes
-                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -150);
-                int randY = (int) (Math.random() * 1700);
-                if(randX < 150){
-                    if(randX < 0){
-                        randX += 300;
+                if (floor >= 5) {
+                    //add platform with stakes
+                    int randX = (int)(Math.random() * MainActivity.CAMERA_WIDTH - 150);
+                    int randY = (int)(Math.random() * 1700);
+                    if (randX < 150) {
+                        if (randX < 0) {
+                            randX += 300;
+                        }
+                        randX += 150;
                     }
-                    randX += 150;
+                    if (randY < 400) {
+                        randY = randY + 200;
+                    }
+                    if (randY > 1650) {
+                        randY = randY - 50;
+                    }
+                    spikedPlatformList.add(new GameObject(randX, randY, ResourceManager.getInstance().spikedPlatform_region, vbom, mPhysicsWorld, this, "", 3, 3));
+                    levelItems.add(spikedPlatformList.get(spNum));
+                    spNum++;
                 }
-                if(randY < 400){
-                    randY = randY + 200;
-                }
-                if(randY > 1650){
-                    randY = randY - 50;
-                }
-                spikedPlatformList.add(new GameObject(randX, randY, ResourceManager.getInstance().spikedPlatform_region, vbom, mPhysicsWorld, this, "", 3, 3));
-                levelItems.add(spikedPlatformList.get(spNum));
-                spNum++;
             } else {
                 //add gold
-                int randX = (int) (Math.random() * MainActivity.CAMERA_WIDTH -50);
-                int randY = (int) (Math.random() * 1700);
-                if(randX < 50){
-                    if(randX < 0){
+                int randX = (int)(Math.random() * MainActivity.CAMERA_WIDTH - 50);
+                int randY = (int)(Math.random() * 1700);
+                if (randX < 50) {
+                    if (randX < 0) {
                         randX += 100;
                     }
                     randX += 50;
                 }
-                if(randY < 400){
+                if (randY < 400) {
                     randY = randY + 200;
                 }
-                if(randY > 1650){
+                if (randY > 1650) {
                     randY = randY - 50;
                 }
                 coinList.add(new Coin(randX, randY, ResourceManager.getInstance().gold_region, vbom, mPhysicsWorld, this, "", 3, 3, 100));
@@ -469,38 +506,77 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             }
         }
     }
-    private void makeNextScreen(){
-        mNextScreenScene = new Scene();
-        mNextScreenScene.setBackgroundEnabled(false);
-        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom) {
-            @Override
-            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                disposeScene();
-                floor++;
-                cleanScene();
-                ResourceManager.getInstance().loadGameResources();
-                resetScene();
-                clearChildScene();
+
+    private boolean itemsOverlap() {
+        for (int i = 0; i < levelItems.size() - 1; i++) {
+            int distance = (int)(Math.abs(levelItems.get(i).getX() - levelItems.get(levelItems.size() - 1).getX())) + (int)(Math.abs(levelItems.get(i).getY() - levelItems.get(levelItems.size() - 1).getY()));
+            if (distance < 500) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private void setOverlap() {
+        for (int i = 0; i < levelItems.size() - 1; i++) {
+            if (itemsOverlap()) {
+                levelItems.get(i).setX((int)(Math.random() * 800 + 10));
+                levelItems.get(i).setY((int)(Math.random() * 1600 + 10));
+            }
+        }
+    }
+
+    private void makeNextScreen() {
+        mNextScreenScene = new Scene();
+        mNextScreenScene.setBackgroundEnabled(false);
+        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom) {@Override
+                                                                                                                                                                   public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+            disposeScene();
+            floor++;
+            cleanScene();
+            ResourceManager.getInstance().loadGameResources();
+            clearChildScene();
+            resetScene();
+            return true;
+        }
         };
         mNextScreen.setScale(4, 4);
         mNextScreenScene.registerTouchArea(mNextScreen);
         mNextScreenScene.attachChild(mNextScreen);
+
+        //On floor 5 add text letting user know spiked platforms are now added
+        if (floor == 4) {
+            warningText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Warning: \nSpiked Platforms Added", new TextOptions(HorizontalAlign.CENTER), vbom);
+            warningText.setPosition(MainActivity.CAMERA_WIDTH / 3 - 120, MainActivity.CAMERA_HEIGHT / 2 + 300);
+            warningText.setLeading(35f);
+            warningText.setScale(1.8f);
+            mNextScreenScene.attachChild(warningText);
+        }
+
+        //On floor 10 add text letting user know player will fall faster
+        if (floor == 9) {
+            warningText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Warning: \nplayer drops faster", new TextOptions(HorizontalAlign.CENTER), vbom);
+            warningText.setPosition(MainActivity.CAMERA_WIDTH / 3 - 60, MainActivity.CAMERA_HEIGHT / 2 + 300);
+            warningText.setLeading(35f);
+            warningText.setScale(2f);
+            mNextScreenScene.attachChild(warningText);
+        }
+        //On floor 20 add text letting user know player will fall even faster
+        if (floor == 19) {
+            warningText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Warning: \nplayer drops even faster", new TextOptions(HorizontalAlign.CENTER), vbom);
+            warningText.setPosition(MainActivity.CAMERA_WIDTH / 3 - 130, MainActivity.CAMERA_HEIGHT / 2 + 300);
+            warningText.setLeading(35f);
+            warningText.setScale(1.6f);
+            mNextScreenScene.attachChild(warningText);
+        }
     }
-    private void makeGameOverScene(){
-        mGameOverScene = new Scene();
-        mGameOverScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().gameOver_region, vbom) {
-            @Override
-            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                restartGame();
-                return true;
-            }
-        };
-        mGameOverScreen.setScale(4, 4);
-        mGameOverScene.registerTouchArea(mGameOverScreen);
-        mGameOverScene.attachChild(mGameOverScreen);
-    }
+
+
+    // ===========================================================
+    // StoreScene
+    // ===========================================================
+
+
     private void makeStoreScene() {
 
         mStoreScene = new Scene();
@@ -537,15 +613,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         // ATTACK BUTTON
         // ===========================================================
 
-        mAttackButton = new AnimatedSprite(120, MainActivity.CAMERA_HEIGHT -150 , ResourceManager.getInstance().attackIncrease_region, vbom) {
+        mAttackButton = new AnimatedSprite(120, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().attackIncrease_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 
                 if (pSceneTouchEvent.isActionDown()) {
+                    //if total coins are greater than cost, purchase power-up and subtract amount from total coins
                     if (goldAmount >= 25) {
-                        attack+= 5;
-                        goldAmount-= 25;
+                        attack += 5;
+                        goldAmount -= 25;
                         coinText.setText(String.valueOf(goldAmount));
                         ResourceManager.getInstance().coinSound.play();
 
@@ -558,7 +635,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             }
         };
         mAttackButton.setScale(3, 3);
-        if( goldAmount<25){
+        if (goldAmount < 25) {
             mAttackButton.setCurrentTileIndex(0);
         } else {
             mAttackButton.setCurrentTileIndex(1);
@@ -570,7 +647,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         // ===========================================================
         // DEFENSE BUTTON
         // ===========================================================
-        mDefenseButton = new AnimatedSprite(340, MainActivity.CAMERA_HEIGHT -150, ResourceManager.getInstance().defenseIncrease_region, vbom) {
+        mDefenseButton = new AnimatedSprite(340, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().defenseIncrease_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -594,9 +671,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             }
         };
         mDefenseButton.setScale(3, 3);
-        if( goldAmount<25){
+        if (goldAmount < 25) {
             mDefenseButton.setCurrentTileIndex(0);
-        }else {
+        } else {
             mDefenseButton.setCurrentTileIndex(1);
             mStoreScene.registerTouchArea(mDefenseButton);
         }
@@ -607,7 +684,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         // LIVES BUTTON
         // ===========================================================
 
-        mLivesButton = new AnimatedSprite(560, MainActivity.CAMERA_HEIGHT -150, ResourceManager.getInstance().addLife_region, vbom) {
+        mLivesButton = new AnimatedSprite(560, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().addLife_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -616,11 +693,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
                     if (goldAmount >= 100) {
                         lives++;
-                        goldAmount-=100;
+                        goldAmount -= 100;
                         coinText.setText(String.valueOf(goldAmount));
                         ResourceManager.getInstance().coinSound.play();
                         mLives.setCurrentTileIndex(lives);
-                        if (lives >=4 ) {
+                        if (lives >= 4) {
                             mLivesButton.setCurrentTileIndex(0);
                             mStoreScene.unregisterTouchArea(mLivesButton);
 
@@ -635,9 +712,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             }
         };
         mLivesButton.setScale(3, 3);
-        if(lives >= 4 || goldAmount<100){
+        if (lives >= 4 || goldAmount < 100) {
             mLivesButton.setCurrentTileIndex(0);
-        }else {
+        } else {
             mLivesButton.setCurrentTileIndex(1);
             mStoreScene.registerTouchArea(mLivesButton);
 
@@ -649,7 +726,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         // MP BUTTON
         // ===========================================================
 
-        mMpButton = new AnimatedSprite(780, MainActivity.CAMERA_HEIGHT -150, ResourceManager.getInstance().addMp_region, vbom) {
+        mMpButton = new AnimatedSprite(780, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().addMp_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -674,9 +751,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
             }
         };
         mMpButton.setScale(3, 3);
-        if(mp >= 3 || goldAmount<50){
+        if (mp >= 3 || goldAmount < 50) {
             mMpButton.setCurrentTileIndex(0);
-        }else {
+        } else {
             mMpButton.setCurrentTileIndex(1);
             mStoreScene.registerTouchArea(mMpButton);
 
@@ -684,64 +761,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
         mStoreScene.attachChild(mMpButton);
     }
 
-    private void playDisableAttack(){
-        mRecharge.animate(40, 0, new AnimatedSprite.IAnimationListener() {
-            @Override
-            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-                attackDisabled = false;
-                mRecharge.stopAnimation();
-            }
+    //reset Store buttons after purchase
+    private void resetStoreButtonSprites() {
 
-            @Override
-            public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                           int pInitialLoopCount) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                                int pOldFrameIndex, int pNewFrameIndex) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                                int pRemainingLoopCount, int pInitialLoopCount) {
-            }
-        });
-    }
-
-    private boolean itemsOverlap(){
-        for(int i=0;i<levelItems.size()-1;i++){
-            int distance = (int)(Math.abs(levelItems.get(i).getX()-levelItems.get(levelItems.size()-1).getX())) + (int)(Math.abs(levelItems.get(i).getY()-levelItems.get(levelItems.size()-1).getY()));
-            if(distance<500){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void setOverlap(){
-        for(int i=0;i<levelItems.size()-1;i++) {
-            if(itemsOverlap()) {
-                levelItems.get(i).setX((int) (Math.random() * 800 + 10));
-                levelItems.get(i).setY((int) (Math.random() * 1600 + 10));
-            }
-        }
-    }
-    private void resetStoreButtonSprites(){
-
-        if(goldAmount < 100) {
+        if (goldAmount < 100) {
             if (goldAmount < 50) {
-                if(goldAmount < 25){
+                if (goldAmount < 25) {
                     mAttackButton.setCurrentTileIndex(0);
                     mStoreScene.unregisterTouchArea(mAttackButton);
                     mDefenseButton.setCurrentTileIndex(0);
                     mStoreScene.unregisterTouchArea(mDefenseButton);
                     mStore.setCurrentTileIndex(0);
-                    //unregisterTouchArea(mStore);
                 }
 
                 mMpButton.setCurrentTileIndex(0);
@@ -749,209 +779,258 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener,IAccel
 
             }
 
-                mLivesButton.setCurrentTileIndex(0);
-                mStoreScene.unregisterTouchArea(mLivesButton);
+            mLivesButton.setCurrentTileIndex(0);
+            mStoreScene.unregisterTouchArea(mLivesButton);
         }
     }
+
+    // ===========================================================
+    // GAMEOVER SCENE
+    // ===========================================================
+
+    private void makeGameOverScene() {
+        mGameOverScene = new Scene();
+        mGameOverScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 300, ResourceManager.getInstance().gameOver_region, vbom);
+        mGameOverScreen.setScale(4, 4);
+        mGameOverScene.attachChild(mGameOverScreen);
+
+        mReplayButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 200, ResourceManager.getInstance().replay_region, vbom) {@Override
+                                                                                                                                                                 public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+            restartGame();
+            ResourceManager.getInstance().bgMusic.play();
+            return true;
+        }
+        };
+        mReplayButton.setScale(3.5f, 3.5f);
+        mGameOverScene.registerTouchArea(mReplayButton);
+        mGameOverScene.attachChild(mReplayButton);
+
+        mHomeButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 400, ResourceManager.getInstance().home_region, vbom) {@Override
+                                                                                                                                                             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+            SceneManager.getInstance().resetGame();
+            //ResourceManager.getInstance().bgMusic.stop();
+            return true;
+        }
+        };
+        mHomeButton.setScale(3.5f, 3.5f);
+        mGameOverScene.registerTouchArea(mHomeButton);
+        mGameOverScene.attachChild(mHomeButton);
+
+        Text floor_achieved = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "Floor Reached: " + floor, new TextOptions(HorizontalAlign.LEFT), vbom);
+        floor_achieved.setPosition(380, MainActivity.CAMERA_HEIGHT / 2 - 100);
+        floor_achieved.setScale(2.2f);
+        mGameOverScene.attachChild(floor_achieved);
+    }
+
     // ===========================================================
     // CREATE CONTACT LISTENER
     // ===========================================================
 
 
-private ContactListener createContactListener()
-        {
+    private ContactListener createContactListener() {
         ContactListener
-                contactListener = new ContactListener()
-        {
-@Override
-public void beginContact(Contact contact)
-        {
-final Fixture x1 = contact.getFixtureA();
-final Fixture x2 = contact.getFixtureB();
-final Body body1 = x1.getBody();
-final Body body2 = x2.getBody();
+                contactListener = new ContactListener() {@Override
+                                                         public void beginContact(Contact contact) {
+            final Fixture x1 = contact.getFixtureA();
+            final Fixture x2 = contact.getFixtureB();
+            final Body body1 = x1.getBody();
+            final Body body2 = x2.getBody();
 
-        //check if player and coin collide
-        for(int i=0;i<coinList.size();i++) {
-        String coinData = "coin" + i;
-        if(("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
-        //collect coin and add it to gold amount
-        destroyCoin(coinList.get(i));
-        int randNum = Math.round((int)(Math.random() * 25));
-        if(randNum == 0){
-        randNum = 1;
-        }
-        goldAmount = goldAmount + randNum;
-        coinText.setText(String.valueOf(goldAmount));
-        }
-        }
+            //check if player and coin collide
+            for (int i = 0; i < coinList.size(); i++) {
+                String coinData = "coin" + i;
+                if (("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
+                    //collect coin and add it to gold amount
+                    destroyCoin(coinList.get(i));
+                    int randNum = Math.round((int)(Math.random() * 25));
+                    if (randNum == 0) {
+                        randNum = 1;
+                    }
+                    goldAmount = goldAmount + randNum;
+                    coinText.setText(String.valueOf(goldAmount));
+                }
+            }
         }
 
-@Override
-public void endContact(Contact contact)
-        {
-final Fixture x1 = contact.getFixtureA();
-final Fixture x2 = contact.getFixtureB();
-final Body body1 = x1.getBody();
-final Body body2 = x2.getBody();
+            @Override
+            public void endContact(Contact contact) {
+                final Fixture x1 = contact.getFixtureA();
+                final Fixture x2 = contact.getFixtureB();
+                final Body body1 = x1.getBody();
+                final Body body2 = x2.getBody();
 
-        //check if player and enemy collide
-        for(int i=0;i<enemyList.size();i++) {
-        String batData = "bat" + i;
-        if(("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
-        if(isAttacking){
-        //kill enemy and add experience
-        destroyEnemy(enemyList.get(i));
-        isAttacking = false;
-        mCharge.stopAnimation();
-        //add experience and level up if necessary
-        exp+=1;
-        if(exp>level*level){
-        level++;
-        levelText.setText("Level: " + String.valueOf(level));
-        if(lives >= maxLives){
-        lives = maxLives;
-        }else{
-        lives++;
-        mLives.setCurrentTileIndex(lives);
-        }
-        exp=0;
-        }
-        expText.setText("Exp: " + String.valueOf(exp));
-        //blood
-        mBlood = createAnimatedSprite(enemyList.get(i).getX(), enemyList.get(i).getY(), ResourceManager.getInstance().blood_region, vbom);
-        attachChild(mBlood);
-        mBlood.setScale(3, 3);
-        mBlood.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+                //check if player and enemy collide
+                for (int i = 0; i < enemyList.size(); i++) {
+                    String batData = "bat" + i;
+                    if (("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
+                        if (isAttacking) {
+                            //kill enemy and add experience
+                            destroyEnemy(enemyList.get(i));
+                            isAttacking = false;
+                            mCharge.stopAnimation();
+                            //add experience and level up if necessary
+                            exp += 1;
+                            if (exp > level * level) {
+                                level++;
+                                levelText.setText("Level: " + String.valueOf(level));
+                                if (lives >= maxLives) {
+                                    lives = maxLives;
+                                } else {
+                                    lives++;
+                                    mLives.setCurrentTileIndex(lives);
+                                }
+                                exp = 0;
+                            }
+                            expText.setText("Exp: " + String.valueOf(exp));
+                            //blood
+                            mBlood = createAnimatedSprite(enemyList.get(i).getX(), enemyList.get(i).getY(), ResourceManager.getInstance().blood_region, vbom);
+                            attachChild(mBlood);
+                            mBlood.setScale(3, 3);
+                            mBlood.animate(75, 0, new AnimatedSprite.IAnimationListener() {
 
-@Override
-public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-        mBlood.setVisible(false);
-        detachChild(mBlood);
-        mBlood.dispose();
+                                @Override
+                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                    mBlood.setVisible(false);
+                                    detachChild(mBlood);
+                                    mBlood.dispose();
 
-        }
-@Override
-public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-        int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                }@Override
+                                 public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+                                                                int pInitialLoopCount) {
+                                    // TODO Auto-generated method stub
 
-        }
+                                }
 
-@Override
-public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-        int pOldFrameIndex, int pNewFrameIndex) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+                                                                    int pOldFrameIndex, int pNewFrameIndex) {
+                                    // TODO Auto-generated method stub
 
-        }
+                                }
 
-@Override
-public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-        int pRemainingLoopCount, int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+                                                                    int pRemainingLoopCount, int pInitialLoopCount) {
+                                    // TODO Auto-generated method stub
 
-        }});
-        }else if(!isAttacking) {
-        if(lives != 0) {
-        /*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+                                }
+                            });
+                        } else if (!isAttacking) {
+                            if (lives != 0) {
+								/*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
 
-@Override
-public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-        player.setCurrentTileIndex(0);
-        player.stopAnimation();
-        }
-@Override
-public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-        int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                        player.setCurrentTileIndex(0);
+                                        player.stopAnimation();
+                                        }
+                                @Override
+                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+                                        int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
 
-        }
+                                        }
 
-@Override
-public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-        int pOldFrameIndex, int pNewFrameIndex) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+                                        int pOldFrameIndex, int pNewFrameIndex) {
+                                        // TODO Auto-generated method stub
 
-        }
+                                        }
 
-@Override
-public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-        int pRemainingLoopCount, int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
 
-        }});*/
-        ResourceManager.getInstance().hitSound.play();
-        lives--;
-        mLives.setCurrentTileIndex(lives);
-        }else {
-        isDead = true;
-        }
-        }
-        }
-        }
-        //check if player and spiked platform collide
-        for(int i=0;i<spikedPlatformList.size();i++) {
-        String spikedData = "spiked" + i;
-        if(("player".equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
-        if(player.getY()<spikedPlatformList.get(i).getY()) {
-        if (lives != 0) {
-        /*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+                                        }});*/
 
-@Override
-public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-        player.setCurrentTileIndex(0);
-        player.stopAnimation();
-        }
+                                //play Hit sound depending on character selected from MainMenu Scene
+                                if (selectedPlayer == 0) {
+                                    ResourceManager.getInstance().wHitSound.play();
+                                }
+                                if (selectedPlayer == 1) {
+                                    ResourceManager.getInstance().aHitSound.play();
+                                }
+                                if (selectedPlayer == 2) {
+                                    ResourceManager.getInstance().mHitSound.play();
+                                }
 
-@Override
-public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-        int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                //loose a life and update health Sprite
+                                lives--;
+                                mLives.setCurrentTileIndex(lives);
+                            } else {
+                                isDead = true;
+                            }
+                        }
+                    }
+                }
+                //check if player and spiked platform collide
+                for (int i = 0; i < spikedPlatformList.size(); i++) {
+                    String spikedData = "spiked" + i;
+                    if (("player".equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
+                        if (player.getY() < spikedPlatformList.get(i).getY()) {
+                            if (lives != 0) {
+								/*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
 
-        }
+                                @Override
+                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                        player.setCurrentTileIndex(0);
+                                        player.stopAnimation();
+                                        }
 
-@Override
-public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-        int pOldFrameIndex, int pNewFrameIndex) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+                                        int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
 
-        }
+                                        }
 
-@Override
-public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-        int pRemainingLoopCount, int pInitialLoopCount) {
-        // TODO Auto-generated method stub
+                                @Override
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+                                        int pOldFrameIndex, int pNewFrameIndex) {
+                                        // TODO Auto-generated method stub
 
-        }
-        });*/
-        ResourceManager.getInstance().hitSound.play();
-        lives--;
-        mLives.setCurrentTileIndex(lives);
-        } else {
-        isDead = true;
-        }
-        }
-        }
-        }
-        }
+                                        }
 
-@Override
-public void preSolve(Contact contact, Manifold oldManifold)
-        {
+                                @Override
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
 
-        }
+                                        }
+                                        });*/
+                                if (selectedPlayer == 0) {
+                                    ResourceManager.getInstance().wHitSound.play();
+                                }
+                                if (selectedPlayer == 1) {
+                                    ResourceManager.getInstance().aHitSound.play();
+                                }
+                                if (selectedPlayer == 2) {
+                                    ResourceManager.getInstance().mHitSound.play();
+                                }
+                                lives--;
+                                mLives.setCurrentTileIndex(lives);
+                            } else {
+                                isDead = true;
+                            }
+                        }
+                    }
+                }
+            }
 
-@Override
-public void postSolve(Contact contact, ContactImpulse impulse)
-        {
+            @Override
+            public void preSolve(Contact contact, Manifold oldManifold) {
 
-        }
+            }
+
+            @Override
+            public void postSolve(Contact contact, ContactImpulse impulse) {
+
+            }
         };
         return contactListener;
-        }
-
-
-
+    }
 
 
 
@@ -960,27 +1039,28 @@ public void postSolve(Contact contact, ContactImpulse impulse)
     // ===========================================================
 
 
-    private void destroyPlatforms(final GameObject platform)
-    {
-       activity.runOnUpdateThread(new Runnable() {
-
-           @Override
-           public void run() {
-               final Body body = platform.body;
-               mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(platform));
-               mPhysicsWorld.destroyBody(body);
-               detachChild(platform);
-               platformList.remove(platform);
-           }
-       });
-    }
-
-    private void destroySpikedPlatforms(final GameObject sp)
-    {
+    private void destroyPlatforms(final GameObject platform) {
         activity.runOnUpdateThread(new Runnable() {
 
             @Override
             public void run() {
+                //Remove Platforms
+                final Body body = platform.body;
+                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(platform));
+                mPhysicsWorld.destroyBody(body);
+                detachChild(platform);
+                platformList.remove(platform);
+            }
+        });
+    }
+
+
+    private void destroySpikedPlatforms(final GameObject sp) {
+        activity.runOnUpdateThread(new Runnable() {
+
+            @Override
+            public void run() {
+                //Remove Spiked Platforms
                 final Body body = sp.body;
                 mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(sp));
                 mPhysicsWorld.destroyBody(body);
@@ -990,12 +1070,12 @@ public void postSolve(Contact contact, ContactImpulse impulse)
         });
     }
 
-    private void destroyEnemy(final Enemy enemy)
-    {
+    private void destroyEnemy(final Enemy enemy) {
         activity.runOnUpdateThread(new Runnable() {
 
             @Override
             public void run() {
+                //Remove Enemies
                 final Body body = enemy.body;
                 mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(enemy));
                 mPhysicsWorld.destroyBody(body);
@@ -1007,12 +1087,12 @@ public void postSolve(Contact contact, ContactImpulse impulse)
             }
         });
     }
-    private void destroyCoin(final Coin coin)
-    {
+    private void destroyCoin(final Coin coin) {
         activity.runOnUpdateThread(new Runnable() {
 
             @Override
             public void run() {
+                //Remove Coin
                 final Body body = coin.body;
                 mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(coin));
                 mPhysicsWorld.destroyBody(body);
@@ -1024,30 +1104,30 @@ public void postSolve(Contact contact, ContactImpulse impulse)
             }
         });
     }
-    public void cleanScene(){
+    public void cleanScene() {
 
 
-        if(enemyList.size()>0) {
+        if (enemyList.size() > 0) {
             for (int i = 0; i < enemyList.size(); i++) {
                 destroyEnemy(enemyList.get(i));
             }
         }
-        if(coinList.size()>0) {
+        if (coinList.size() > 0) {
             for (int i = 0; i < coinList.size(); i++) {
                 destroyCoin(coinList.get(i));
             }
         }
-        if(platformList.size()>0) {
+        if (platformList.size() > 0) {
             for (int i = 0; i < platformList.size(); i++) {
                 destroyPlatforms(platformList.get(i));
             }
         }
-        if(spikedPlatformList.size()>0) {
+        if (spikedPlatformList.size() > 0) {
             for (int i = 0; i < spikedPlatformList.size(); i++) {
                 destroySpikedPlatforms(spikedPlatformList.get(i));
             }
         }
-        if(levelItems.size()>0) {
+        if (levelItems.size() > 0) {
             for (int i = 0; i < levelItems.size(); i++) {
                 //(levelItems.get(i));
             }
@@ -1090,7 +1170,7 @@ public void postSolve(Contact contact, ContactImpulse impulse)
 
 
     }
-    private void restartGame(){
+    private void restartGame() {
         floor = 1;
         goldAmount = 0;
         exp = 0;
@@ -1106,16 +1186,11 @@ public void postSolve(Contact contact, ContactImpulse impulse)
         clearChildScene();
         isDead = false;
         attackDisabled = false;
-        /*if (!ResourceManager.getInstance().bgMusic.isPlaying()) {
-            ResourceManager.getInstance().bgMusic.play();
-        }*/
     }
 
 
     @Override
-    public void onBackKeyPressed() {
-
-    }
+    public void onBackKeyPressed() {}
 
     @Override
     public void disposeScene() {
@@ -1123,12 +1198,8 @@ public void postSolve(Contact contact, ContactImpulse impulse)
     }
 
 
-
-
-
-
     // ===========================================================
-    // ENABELING ACCELERATION
+    // ENABLING ACCELERATION
     // ===========================================================
     @Override
     public void onAccelerationAccuracyChanged(AccelerationData pAccelerationData) {
@@ -1138,19 +1209,23 @@ public void postSolve(Contact contact, ContactImpulse impulse)
     @Override
     public void onAccelerationChanged(AccelerationData pAccelerationData) {
 
-        if(floor <=10) {
+        if (floor < 10) {
             final Vector2 gravity = Vector2Pool.obtain(pAccelerationData.getX() * 8, SensorManager.GRAVITY_EARTH * 1.2f);
             mPhysicsWorld.setGravity(gravity);
             Vector2Pool.recycle(gravity);
         }
-        else {
+        //change acceleration and gravity after level 10
+        else if (floor < 20) {
             mPhysicsWorld.clearForces();
             final Vector2 gravity2 = Vector2Pool.obtain(pAccelerationData.getX() * 6, SensorManager.GRAVITY_EARTH * 1.5f);
             mPhysicsWorld.setGravity(gravity2);
             Vector2Pool.recycle(gravity2);
+        } else {
+            mPhysicsWorld.clearForces();
+            final Vector2 gravity3 = Vector2Pool.obtain(pAccelerationData.getX() * 6, SensorManager.GRAVITY_EARTH * 1.7f);
+            mPhysicsWorld.setGravity(gravity3);
+            Vector2Pool.recycle(gravity3);
         }
     }
 
 }
-
-
