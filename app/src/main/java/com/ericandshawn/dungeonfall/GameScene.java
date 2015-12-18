@@ -460,12 +460,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
             }
 
             @Override
-<<<<<<< HEAD
             public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
                                                 int pRemainingLoopCount, int pInitialLoopCount) {
-=======
-            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
             }
         });
     }
@@ -1066,7 +1062,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                         }
                         goldAmount = goldAmount + randNum;
                         coinText.setText(String.valueOf(goldAmount));
-<<<<<<< HEAD
                     }
                 }
                 //check if fireball and enemy collide
@@ -1273,8 +1268,6 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                             exp = 0;
                         }
                         expText.setText("Exp: " + String.valueOf(exp));
-=======
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                     }
                 }
             }
@@ -1341,53 +1334,27 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                             });
                         } else if (!isAttacking) {
                             if (lives != 0) {
-<<<<<<< HEAD
-                                player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
-=======
 								player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-
                                     @Override
                                     public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
                                         player.setCurrentTileIndex(0);
                                         player.stopAnimation();
-<<<<<<< HEAD
                                     }
                                     @Override
                                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
-=======
                                         }
-                                @Override
-                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-                                        // TODO Auto-generated method stub
 
-                                    }
 
-<<<<<<< HEAD
                                     @Override
                                     public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
-=======
-                                @Override
-                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-                                        // TODO Auto-generated method stub
 
                                     }
 
-<<<<<<< HEAD
                                     @Override
                                     public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
                                     }});
-=======
-                                @Override
-                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
-                                        // TODO Auto-generated method stub
-
-                                        }});
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
                                 //play Hit sound depending on character selected from MainMenu Scene
                                 if (selectedPlayer == 0) {
@@ -1415,55 +1382,29 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                     if (("player".equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
                         if (player.getY() < spikedPlatformList.get(i).getY()) {
                             if (lives != 0) {
-<<<<<<< HEAD
-                                player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
-=======
 								player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-
                                     @Override
                                     public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
                                         player.setCurrentTileIndex(0);
                                         player.stopAnimation();
                                     }
 
-<<<<<<< HEAD
                                     @Override
                                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
-=======
-                                @Override
-                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-                                        // TODO Auto-generated method stub
 
                                     }
 
-<<<<<<< HEAD
                                     @Override
                                     public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
-=======
-                                @Override
-                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
-                                        // TODO Auto-generated method stub
 
                                     }
 
-<<<<<<< HEAD
                                     @Override
                                     public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
                                     }
                                 });
-=======
-                                @Override
-                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
-                                        // TODO Auto-generated method stub
-
-                                        }
-                                        });
->>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                 if (selectedPlayer == 0) {
                                     ResourceManager.getInstance().wHitSound.play();
                                 }
