@@ -1,6 +1,7 @@
 package com.ericandshawn.dungeonfall;
 
 import android.hardware.SensorManager;
+import android.os.CountDownTimer;
 import android.util.Log;
 
 import com.badlogic.gdx.math.Vector2;
@@ -35,6 +36,9 @@ import org.andengine.util.HorizontalAlign;
 import org.andengine.util.math.MathUtils;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Handler;
 
 /**
  * Created by Shawn on 11/18/2015.
@@ -147,6 +151,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         makeNextScreen();
         makeGameOverScene();
         attackDisabled = false;
+
     }
     private void createPhysics() {
         registerUpdateHandler(new FPSLogger());
@@ -250,8 +255,15 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                     if (selectedPlayer == 2) {
                         ResourceManager.getInstance().mDieSound.play();
                     }
+
+                    //Set Scene to GameOver Scene
                     setChildScene(mGameOverScene, false, true, true);
+
+                    //stop background music and clear it from scene
                     ResourceManager.getInstance().bgMusic.stop();
+                    ResourceManager.getInstance().bgMusic.release();
+                    ResourceManager.getInstance().bgMusic = null;
+                    SceneManager.getInstance().bgMusicPlaying = false;
                 }
             }
         });
@@ -263,7 +275,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         if (mPhysicsWorld != null) {
             //Create player to fall from top of screen wherever use touched on screen
             if (pSceneTouchEvent.isActionDown() && !playerDrop && !isDead) {
-                addPlayer(pSceneTouchEvent.getX(), -150);
+                addPlayer(pSceneTouchEvent.getX(), - 150);
                 activity.getEngine().enableAccelerationSensor(activity, this);
                 return true;
 
@@ -281,21 +293,18 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                     }
 
                     @Override
-                    public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                                   int pInitialLoopCount) {
+                    public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
                         isAttacking = true;
                     }
 
                     @Override
-                    public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                                        int pOldFrameIndex, int pNewFrameIndex) {
+                    public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
                         // TODO Auto-generated method stub
 
                     }
 
                     @Override
-                    public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                    public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                         // TODO Auto-generated method stub
 
                     }
@@ -439,22 +448,24 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
             }
 
             @Override
-            public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                           int pInitialLoopCount) {
+            public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
-            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                                int pOldFrameIndex, int pNewFrameIndex) {
+            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
+<<<<<<< HEAD
             public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
                                                 int pRemainingLoopCount, int pInitialLoopCount) {
+=======
+            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
             }
         });
     }
@@ -529,11 +540,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         };
         mStore.setScale(3, 3);
 
-        // If you have less than 25 coins, display 50% opacity sprite
-        if (goldAmount < 25) {
+        // If you have less than 50 coins, display 50% opacity sprite
+        if (goldAmount < 50) {
             mStore.setCurrentTileIndex(0);
         }
-        //If you have enough coins to use Store(25 or more), display 100% opacity sprite
+        //If you have enough coins to use Store(50 or more), display 100% opacity sprite
         else {
             mStore.setCurrentTileIndex(1);
         }
@@ -546,12 +557,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
     private void addPlayer(final float pX, final float pY) {
         playerDrop = true;
-        player = new Hero(pX, pY, ResourceManager.getInstance().player_region, vbom, mPhysicsWorld, this, "player", 3, 3);
 
         //Get player selected from MainMenu Scene
         selectedPlayer = ResourceManager.getInstance().getPlayerChosen();
-        //Change Sprite Tile to match Image selected
-        player.setCurrentTileIndex(selectedPlayer);
+
+        //Change player Sprite to match Image selected
+        if(selectedPlayer==0){
+            player = new Hero(pX,pY,ResourceManager.getInstance().wHit_region,vbom,mPhysicsWorld,this,"player",3,3);
+
+        }else if(selectedPlayer == 1){
+            player = new Hero(pX,pY,ResourceManager.getInstance().aHit_region,vbom,mPhysicsWorld,this,"player",3,3);
+
+        }
+        else if(selectedPlayer == 2){
+            player = new Hero(pX,pY,ResourceManager.getInstance().mHit_region,vbom,mPhysicsWorld,this,"player",3,3);
+        }
 
         //Detach the store sprite while running through level
         detachChild(mStore);
@@ -717,16 +737,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
     private void makeNextScreen() {
         mNextScreenScene = new Scene();
         mNextScreenScene.setBackgroundEnabled(false);
-        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom) {@Override
-                                                                                                                                                                   public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-            disposeScene();
-            floor++;
-            cleanScene();
-            ResourceManager.getInstance().loadGameResources();
-            clearChildScene();
-            resetScene();
-            return true;
-        }
+        mNextScreen = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 135, MainActivity.CAMERA_HEIGHT / 2 - 240, ResourceManager.getInstance().nextFloor_region, vbom) {
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                if (pSceneTouchEvent.isActionDown()){
+                    mNextScreenScene.unregisterTouchArea(mNextScreen);
+                    //NextScreenScene.setBackground(new Background(Color.GREEN));
+                    //unload Game Resources
+                    disposeScene();
+                    floor++;
+                    cleanScene();
+                    ResourceManager.getInstance().loadGameResources();
+                    clearChildScene();
+                    resetScene();
+                }
+                return true;
+            }
         };
         mNextScreen.setScale(4, 4);
         mNextScreenScene.registerTouchArea(mNextScreen);
@@ -772,18 +798,16 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         //mStoreScene.setBackground(new Background(Color.BLACK));
         //mStore.setVisible(false);
         mStore.setCurrentTileIndex(0);
-        closeStoreButton = new Sprite(60, MainActivity.CAMERA_HEIGHT - 400, ResourceManager.getInstance().closeStore_region, vbom) {
+        closeStoreButton = new Sprite(340, MainActivity.CAMERA_HEIGHT - 300, ResourceManager.getInstance().closeStore_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-                //clearChildScene();
-
 
                 if (pSceneTouchEvent.isActionDown()) {
                     //SceneManager.getInstance().setGameScene();
                     clearChildScene();
                     //mStore.setVisible(true);
-                    if (goldAmount < 25) {
+                    if (goldAmount < 50) {
                         mStore.setCurrentTileIndex(0);
                     } else {
                         mStore.setCurrentTileIndex(1);
@@ -801,7 +825,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         // ATTACK BUTTON
         // ===========================================================
 
-        mAttackButton = new AnimatedSprite(120, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().attackIncrease_region, vbom) {
+        /*mAttackButton = new AnimatedSprite(120, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().attackIncrease_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -830,12 +854,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
             mStoreScene.registerTouchArea(mAttackButton);
         }
         mStoreScene.attachChild(mAttackButton);
+        */
 
 
         // ===========================================================
         // DEFENSE BUTTON
         // ===========================================================
-        mDefenseButton = new AnimatedSprite(340, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().defenseIncrease_region, vbom) {
+        /* mDefenseButton = new AnimatedSprite(340, MainActivity.CAMERA_HEIGHT - 150, ResourceManager.getInstance().defenseIncrease_region, vbom) {
 
             @Override
             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -866,6 +891,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
             mStoreScene.registerTouchArea(mDefenseButton);
         }
         mStoreScene.attachChild(mDefenseButton);
+        */
 
 
         // ===========================================================
@@ -954,16 +980,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
         if (goldAmount < 100) {
             if (goldAmount < 50) {
-                if (goldAmount < 25) {
+                /*if (goldAmount < 25) {
                     mAttackButton.setCurrentTileIndex(0);
                     mStoreScene.unregisterTouchArea(mAttackButton);
                     mDefenseButton.setCurrentTileIndex(0);
-                    mStoreScene.unregisterTouchArea(mDefenseButton);
-                    mStore.setCurrentTileIndex(0);
-                }
+
+                }*/
 
                 mMpButton.setCurrentTileIndex(0);
                 mStoreScene.unregisterTouchArea(mMpButton);
+                mStoreScene.unregisterTouchArea(mDefenseButton);
+                mStore.setCurrentTileIndex(0);
 
             }
 
@@ -982,23 +1009,25 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         mGameOverScreen.setScale(4, 4);
         mGameOverScene.attachChild(mGameOverScreen);
 
-        mReplayButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 200, ResourceManager.getInstance().replay_region, vbom) {@Override
-                                                                                                                                                                 public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-            restartGame();
-            ResourceManager.getInstance().bgMusic.play();
-            return true;
-        }
+        mReplayButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 200, ResourceManager.getInstance().replay_region, vbom) {
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                restartGame();
+                ResourceManager.getInstance().bgMusic.play();
+                SceneManager.getInstance().bgMusicPlaying = true;
+                return true;
+            }
         };
         mReplayButton.setScale(3.5f, 3.5f);
         mGameOverScene.registerTouchArea(mReplayButton);
         mGameOverScene.attachChild(mReplayButton);
 
-        mHomeButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 400, ResourceManager.getInstance().home_region, vbom) {@Override
-                                                                                                                                                             public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-            SceneManager.getInstance().resetGame();
-            //ResourceManager.getInstance().bgMusic.stop();
-            return true;
-        }
+        mHomeButton = new Sprite(MainActivity.CAMERA_WIDTH / 2 - 50, MainActivity.CAMERA_HEIGHT / 2 + 400, ResourceManager.getInstance().home_region, vbom) {
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                SceneManager.getInstance().resetGame();
+                return true;
+            }
         };
         mHomeButton.setScale(3.5f, 3.5f);
         mGameOverScene.registerTouchArea(mHomeButton);
@@ -1037,6 +1066,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                         }
                         goldAmount = goldAmount + randNum;
                         coinText.setText(String.valueOf(goldAmount));
+<<<<<<< HEAD
                     }
                 }
                 //check if fireball and enemy collide
@@ -1243,6 +1273,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                             exp = 0;
                         }
                         expText.setText("Exp: " + String.valueOf(exp));
+=======
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                     }
                 }
             }
@@ -1309,30 +1341,53 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                             });
                         } else if (!isAttacking) {
                             if (lives != 0) {
+<<<<<<< HEAD
                                 player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+=======
+								player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
                                     @Override
                                     public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
                                         player.setCurrentTileIndex(0);
                                         player.stopAnimation();
+<<<<<<< HEAD
                                     }
                                     @Override
                                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+=======
+                                        }
+                                @Override
+                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                         // TODO Auto-generated method stub
 
                                     }
 
+<<<<<<< HEAD
                                     @Override
                                     public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+=======
+                                @Override
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                         // TODO Auto-generated method stub
 
                                     }
 
+<<<<<<< HEAD
                                     @Override
                                     public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
                                     }});
+=======
+                                @Override
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
+
+                                        }});
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
                                 //play Hit sound depending on character selected from MainMenu Scene
                                 if (selectedPlayer == 0) {
@@ -1360,7 +1415,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                     if (("player".equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
                         if (player.getY() < spikedPlatformList.get(i).getY()) {
                             if (lives != 0) {
+<<<<<<< HEAD
                                 player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+=======
+								player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
                                     @Override
                                     public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
@@ -1368,24 +1427,43 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                                         player.stopAnimation();
                                     }
 
+<<<<<<< HEAD
                                     @Override
                                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+=======
+                                @Override
+                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                         // TODO Auto-generated method stub
 
                                     }
 
+<<<<<<< HEAD
                                     @Override
                                     public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+=======
+                                @Override
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                         // TODO Auto-generated method stub
 
                                     }
 
+<<<<<<< HEAD
                                     @Override
                                     public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
                                     }
                                 });
+=======
+                                @Override
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                        // TODO Auto-generated method stub
+
+                                        }
+                                        });
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
                                 if (selectedPlayer == 0) {
                                     ResourceManager.getInstance().wHitSound.play();
                                 }

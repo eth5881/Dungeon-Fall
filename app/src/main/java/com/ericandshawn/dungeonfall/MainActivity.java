@@ -1,6 +1,7 @@
 package com.ericandshawn.dungeonfall;
 
 
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import org.andengine.engine.camera.Camera;
@@ -59,22 +60,28 @@ public class MainActivity extends BaseGameActivity {
     public void onDestroy(){
         super.onDestroy();
         System.exit(0);
-        if (isGameLoaded())
+        if (SceneManager.getInstance().bgMusicPlaying) {
             ResourceManager.getInstance().bgMusic.stop();
+       }
     }
     @Override
     protected void onPause(){
         super.onPause();
-        if (isGameLoaded())
+        //if background music is playing
+        if (SceneManager.getInstance().bgMusicPlaying){
             ResourceManager.getInstance().bgMusic.pause();
+        }
     }
 
     @Override
     protected synchronized void onResume(){
         super.onResume();
         System.gc();
-        if (isGameLoaded())
-            ResourceManager.getInstance().bgMusic.play();
+        if(isGameLoaded()) {
+            if (SceneManager.getInstance().bgMusicPlaying) {
+                ResourceManager.getInstance().bgMusic.play();
+            }
+        }
     }
     // If the player hits the back button, quit the app
     public boolean onKeyDown(int keyCode, KeyEvent event) {

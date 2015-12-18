@@ -23,6 +23,7 @@ public class SceneManager {
     private static final SceneManager INSTANCE = new SceneManager();
     private BaseScene currentScene;
     private Engine engine = ResourceManager.getInstance().engine;
+    public boolean bgMusicPlaying = false;
 
     //---------------------------------------------
     // CLASS LOGIC
@@ -39,6 +40,7 @@ public class SceneManager {
     }
     //When click on home button on GameOver Scene
     public void resetGame(){
+        bgMusicPlaying = false;
         ResourceManager.getInstance().loadMenuResources();
         menuScene = new MainMenuScene();
         setScene(menuScene);
@@ -54,8 +56,9 @@ public class SceneManager {
         ResourceManager.getInstance().loadGameResources();
         gameScene = new GameScene();
         setScene(gameScene);
+        //Let MainActivity know that background music is playing
+        bgMusicPlaying = true;
     }
-
 
     //---------------------------------------------
     // GETTERS AND SETTERS

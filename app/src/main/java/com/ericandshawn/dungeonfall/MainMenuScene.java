@@ -150,8 +150,9 @@ public class MainMenuScene extends BaseScene implements MenuScene.IOnMenuItemCli
         //description text about the game and how to play
         Text descText = new Text(0, 0, ResourceManager.getInstance().menuNameFont,
                 "Tap the screen to start the \nlevel and tilt the device to \nmove your character side to \nside while they're falling." +
-                "\nCollect coins to use at the \nstore and tap and hold to \ndestroy enemies. The longer \nthe charge the more damage" +
-                "\nyou will get and the faster \nyou will level up. Select \nyour character and try to \nsee how far you can make it \nthrough the Dungeon.",
+                "\nCollect coins to use at the \nstore and tap and hold to \ndestroy enemies. Each \ncharacter has its own ability" +
+                "\npower that you can use \nthroughout the game. Select \nyour hero and try to see how \nfar you can make it through" +
+                "\nthe dungeon.",
                 new TextOptions(HorizontalAlign.LEFT), vbom);
         descText.setPosition(90, 480);
         descText.setLeading(35);

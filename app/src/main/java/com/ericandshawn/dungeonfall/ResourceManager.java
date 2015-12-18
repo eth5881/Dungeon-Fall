@@ -58,7 +58,6 @@ public class ResourceManager {
     protected ITextureRegion closeAbout_region;
 
     //Game Textures
-    protected ITiledTextureRegion player_region;
     protected ITiledTextureRegion playerSelection_region;
     protected ITiledTextureRegion bat_region;
     protected ITiledTextureRegion gold_region;
@@ -72,10 +71,16 @@ public class ResourceManager {
     protected ITiledTextureRegion blood_region;
     protected ITextureRegion goldHud_region;
     protected ITextureRegion nextFloor_region;
+<<<<<<< HEAD
     protected ITiledTextureRegion special_shield_region;
     protected ITextureRegion special_arrow_region;
     protected ITiledTextureRegion special_fireball_region;
     protected ITiledTextureRegion explosion_region;
+=======
+    protected ITiledTextureRegion wHit_region;
+    protected ITiledTextureRegion aHit_region;
+    protected ITiledTextureRegion mHit_region;
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
     //Game Over Textures
     protected ITextureRegion gameOver_region;
@@ -117,8 +122,6 @@ public class ResourceManager {
     public Music bgMusic;
 
 
-
-
     public void loadMenuResources()
     {
         loadMenuGraphics();
@@ -129,7 +132,11 @@ public class ResourceManager {
         loadGameGraphics();
         loadHudGraphics();
         loadGameFonts();
-        loadGameAudio();
+        //prevents audio from loading after ever floor(only loads once on first floor)
+        //Load game resources is getting called after every floor
+        if(bgMusic == null) {
+            loadGameAudio();
+        }
         loadStoreGraphics();
     }
     private void loadMenuGraphics()
@@ -186,7 +193,6 @@ public class ResourceManager {
         mBackgroundBitmapTextureAtlas.load();
 
         gameTextureAtlas = new BuildableBitmapTextureAtlas(activity.getTextureManager(),2048, 1024, TextureOptions.BILINEAR);
-        player_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "playerSprite.png",3,1);
         bat_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bat.png", 3, 1);
         gold_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "gold.png",8,1);
         platform_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "platform.png");
@@ -199,10 +205,16 @@ public class ResourceManager {
         home_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "home.png");
         blood_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bloodSheet.png", 6, 1);
         door_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "door.png", 5, 1);
+<<<<<<< HEAD
         special_shield_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "shieldSheet.png", 8, 6);
         special_arrow_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "arrow.png");
         special_fireball_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "fireballSheet.png", 8, 1);
         explosion_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "explosions.png", 16, 1);
+=======
+        wHit_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "warrior_hit.png", 7, 1);
+        aHit_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "archer_hit.png", 7, 1);
+        mHit_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "mage_hit.png", 7, 1);
+>>>>>>> cb47b0603f757a75255079ed6ff2f9aa74d9717b
 
 
         try
@@ -281,6 +293,7 @@ public class ResourceManager {
         }
 
     }
+
     public void unloadMenuResources(){
         menuTextureAtlas.unload();
         menuTextureAtlas = null;
@@ -293,8 +306,8 @@ public class ResourceManager {
         storeTextureAtlas = null;
         hudTextureAtlas.unload();
         hudTextureAtlas = null;
-
     }
+
 
     public void setPlayerChosen(int mPlayerChosen){
         playerChosen = mPlayerChosen;
