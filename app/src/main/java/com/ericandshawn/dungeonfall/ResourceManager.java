@@ -72,6 +72,10 @@ public class ResourceManager {
     protected ITiledTextureRegion blood_region;
     protected ITextureRegion goldHud_region;
     protected ITextureRegion nextFloor_region;
+    protected ITiledTextureRegion special_shield_region;
+    protected ITextureRegion special_arrow_region;
+    protected ITiledTextureRegion special_fireball_region;
+    protected ITiledTextureRegion explosion_region;
 
     //Game Over Textures
     protected ITextureRegion gameOver_region;
@@ -84,6 +88,9 @@ public class ResourceManager {
     protected ITiledTextureRegion defenseIncrease_region;
     protected ITiledTextureRegion addMp_region;
     protected ITiledTextureRegion store_region;
+    protected ITiledTextureRegion shield_region;
+    protected ITiledTextureRegion arrow_region;
+    protected ITiledTextureRegion fireball_region;
     protected ITextureRegion closeStore_region;
 
 
@@ -105,6 +112,8 @@ public class ResourceManager {
     protected Sound mDieSound;
     protected Sound aDieSound;
     protected Sound coinSound;
+    protected Sound shieldSound;
+    protected Sound arrowSound;
     public Music bgMusic;
 
 
@@ -150,6 +159,9 @@ public class ResourceManager {
         lives_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "heartSheet.png", 5, 1);
         mp_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "mpSheet.png", 4, 1);
         store_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "storeButton.png", 2, 1);
+        shield_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "shieldButton.png", 2, 1);
+        arrow_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "arrowButton.png", 2, 1);
+        fireball_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(hudTextureAtlas, activity, "fireballButton.png", 2, 1);
         goldHud_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(hudTextureAtlas, activity, "goldHud.png");
 
         try
@@ -187,6 +199,10 @@ public class ResourceManager {
         home_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "home.png");
         blood_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "bloodSheet.png", 6, 1);
         door_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "door.png", 5, 1);
+        special_shield_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "shieldSheet.png", 8, 6);
+        special_arrow_region = BitmapTextureAtlasTextureRegionFactory.createFromAsset(gameTextureAtlas, activity, "arrow.png");
+        special_fireball_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "fireballSheet.png", 8, 1);
+        explosion_region = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(gameTextureAtlas, activity, "explosions.png", 16, 1);
 
 
         try
@@ -239,6 +255,7 @@ public class ResourceManager {
         SoundFactory.setAssetBasePath("mfx/");
         try
         {
+            shieldSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"shield.wav");
             fireSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"fireball.wav");
             wHitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt.wav");
             mHitSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"grunt2.wav");
@@ -249,6 +266,7 @@ public class ResourceManager {
             wDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell.wav");
             mDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell2.wav");
             aDieSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"yell3.wav");
+            arrowSound = SoundFactory.createSoundFromAsset(activity.getSoundManager(),activity,"arrow.wav");
 
         }catch (final IOException e) {
             Debug.e(e);

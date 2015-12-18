@@ -2,7 +2,6 @@ package com.ericandshawn.dungeonfall;
 
 import android.hardware.SensorManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -13,14 +12,12 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
-import com.badlogic.gdx.physics.box2d.joints.PrismaticJoint;
 
 import org.andengine.engine.camera.hud.HUD;
 import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.text.Text;
@@ -34,15 +31,9 @@ import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.input.sensor.acceleration.AccelerationData;
 import org.andengine.input.sensor.acceleration.IAccelerationListener;
 import org.andengine.input.touch.TouchEvent;
-import org.andengine.opengl.texture.region.ITiledTextureRegion;
-import org.andengine.opengl.texture.region.TiledTextureRegion;
-import org.andengine.opengl.vbo.VertexBufferObject;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
-import org.andengine.ui.IGameInterface;
 import org.andengine.util.HorizontalAlign;
-import org.andengine.util.color.Color;
+import org.andengine.util.math.MathUtils;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -63,6 +54,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
     private ArrayList <Enemy> enemyList;
     private ArrayList <GameObject> platformList;
     private ArrayList <GameObject> spikedPlatformList;
+    private ArrayList <Coin> doorList;
     private ArrayList <Sprite> levelItems;
 
     //HUD Sprites
@@ -78,10 +70,21 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
     private AnimatedSprite mDefenseButton;
     private AnimatedSprite mMpButton;
 
+    //Specials
+    private AnimatedSprite mShieldButton;
+    private AnimatedSprite mArrowButton;
+    private AnimatedSprite mFireballButton;
+    private AnimatedSprite mShieldSpecial;
+    private AnimatedSprite mFireballSpecial;
+    private Sprite mArrowSpecial;
+    private Body arrowBody;
+    private Body fireBody;
+
     //Game Sprites
     private AnimatedSprite mCharge;
     private AnimatedSprite mRecharge;
     private AnimatedSprite mBlood;
+    private AnimatedSprite mExplosion;
     private Hero player;
     private Sprite mBg;
 
@@ -118,8 +121,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
     private boolean playerDrop = false;
     private boolean isAttacking = false;
     private boolean attackDisabled = false;
+    private boolean arrowSelected = false;
+    private boolean fireballSelected = false;
+    private boolean shieldOn = false;
+    private boolean shootArrow = false;
     private boolean isDead = false;
-
 
     // ===========================================================
     // Methods
@@ -186,9 +192,22 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                         mRecharge.setX((player.getX()) - (player.getWidth() + 5));
                         mRecharge.setY((player.getY()) - (player.getHeight() - 45));
                     } else {
-
                         mCharge.setVisible(false);
                         mRecharge.setVisible(false);
+                    }
+                    if(shootArrow) {
+                        if (mArrowSpecial.getY() > MainActivity.CAMERA_HEIGHT + 150) {
+                            mPhysicsWorld.destroyBody(arrowBody);
+                            mArrowSpecial.detachSelf();
+                            mArrowSpecial.dispose();
+                            shootArrow = false;
+                        }
+                    }
+                    if (shieldOn) {
+                        mShieldSpecial.setVisible(true);
+                        //Attach shield to player
+                        mShieldSpecial.setX((player.getX()) - (player.getWidth() - 18));
+                        mShieldSpecial.setY((player.getY()) - (player.getHeight() - 55));
                     }
                     //set user data for enemies
                     for (int i = 0; i < enemyList.size(); i++) {
@@ -200,10 +219,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                         String coinString = "coin" + j;
                         coinList.get(j).body.setUserData(coinString);
                     }
-                    //set user data for coins
+                    //set user data for spikes
                     for (int x = 0; x < spikedPlatformList.size(); x++) {
                         String spikedString = "spiked" + x;
                         spikedPlatformList.get(x).body.setUserData(spikedString);
+                    }
+                    //set user data for spikes
+                    for (int x = 0; x < platformList.size(); x++) {
+                        String platformData = "platform" + x;
+                        platformList.get(x).body.setUserData(platformData);
+                    }
+                    //set user data for door
+                    for (int k = 0; k < doorList.size(); k++) {
+                        String doorListString = "door" + k;
+                        doorList.get(k).body.setUserData(doorListString);
                     }
                 }
                 //Game Over - no more lives
@@ -239,15 +268,17 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                 return true;
 
             }
-            if (pSceneTouchEvent.isActionDown() && !attackDisabled) {
+
+            if (pSceneTouchEvent.isActionDown() && !attackDisabled && !shieldOn) {
                 //Run Charge Animation
-                mCharge.animate(20, 0, new AnimatedSprite.IAnimationListener() {@Override
-                                                                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-                    attackDisabled = true;
-                    isAttacking = false;
-                    mCharge.stopAnimation();
-                    playDisableAttack();
-                }
+                mCharge.animate(20, 0, new AnimatedSprite.IAnimationListener() {
+                    @Override
+                    public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                        attackDisabled = true;
+                        isAttacking = false;
+                        mCharge.stopAnimation();
+                        playDisableAttack();
+                    }
 
                     @Override
                     public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
@@ -269,6 +300,127 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
                     }
                 });
+            } else if (pSceneTouchEvent.getX() > MainActivity.CAMERA_WIDTH - 105 && pSceneTouchEvent.getY() > MainActivity.CAMERA_HEIGHT - 100 && selectedPlayer == 0 && mp > 0) {
+                mShieldButton.setCurrentTileIndex(1);
+                mp--;
+                mMp.setCurrentTileIndex(mp);
+                ResourceManager.getInstance().shieldSound.play();
+                //Run shield Animation
+                mShieldSpecial.animate(40, 0, new AnimatedSprite.IAnimationListener() {
+                    @Override
+                    public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                        shieldOn = false;
+                        mShieldSpecial.stopAnimation();
+                        mShieldSpecial.setVisible(false);
+                        mShieldButton.setCurrentTileIndex(0);
+                    }
+
+                    @Override
+                    public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+                                                   int pInitialLoopCount) {
+                        shieldOn = true;
+                    }
+
+                    @Override
+                    public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+                                                        int pOldFrameIndex, int pNewFrameIndex) {
+                        // TODO Auto-generated method stub
+
+                    }
+
+                    @Override
+                    public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+                                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                        // TODO Auto-generated method stub
+
+                    }
+                });
+            } else if (pSceneTouchEvent.getX() > MainActivity.CAMERA_WIDTH - 105 && pSceneTouchEvent.getY() > MainActivity.CAMERA_HEIGHT - 100 && selectedPlayer == 1 && mp > 0) {
+                mArrowButton.setCurrentTileIndex(1);
+                arrowSelected = true;
+            } else if (pSceneTouchEvent.getX() > MainActivity.CAMERA_WIDTH - 105 && pSceneTouchEvent.getY() > MainActivity.CAMERA_HEIGHT - 100 && selectedPlayer == 2 && mp > 0) {
+                mFireballButton.setCurrentTileIndex(1);
+                fireballSelected = true;
+            }
+            if (pSceneTouchEvent.isActionDown() && arrowSelected && mp > 0){
+                shootArrow = true;
+                mArrowSpecial = new Sprite(player.getX(), player.getY(), ResourceManager.getInstance().special_arrow_region, vbom);
+                if(pSceneTouchEvent.getX() > player.getX()) {
+                    mArrowSpecial.setX(player.getX()+player.getWidth()/2+mArrowSpecial.getWidth());
+                }
+                if(pSceneTouchEvent.getX() < player.getX()) {
+                    mArrowSpecial.setX(player.getX()-player.getWidth()/2-mArrowSpecial.getWidth());
+                }
+                if(pSceneTouchEvent.getY() > player.getY()) {
+                    mArrowSpecial.setY(player.getY() + player.getHeight() / 2 + mArrowSpecial.getHeight());
+                }
+                if(pSceneTouchEvent.getY() < player.getY()) {
+                    mArrowSpecial.setY(player.getY() - player.getHeight() / 2 - mArrowSpecial.getHeight());
+                }
+                attachChild(mArrowSpecial);
+
+                mp--;
+                mMp.setCurrentTileIndex(mp);
+                arrowSelected = false;
+                mArrowButton.setCurrentTileIndex(0);
+
+                float pValueX = pSceneTouchEvent.getX();
+
+                float pValueY = player.getY() - pSceneTouchEvent.getY();
+
+                float directionX = pValueX - mArrowSpecial.getX();
+                float directionY = (player.getY() - pValueY) - mArrowSpecial.getY();
+
+                float rotationAngle = (float) Math.atan2(directionY, directionX);
+
+                mArrowSpecial.setRotation(MathUtils.radToDeg(rotationAngle));
+
+                final FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(1, 0.7f, 0.3f);
+                arrowBody = PhysicsFactory.createBoxBody(mPhysicsWorld, mArrowSpecial, BodyDef.BodyType.DynamicBody, objectFixtureDef);
+                mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mArrowSpecial, arrowBody, true, true));
+                arrowBody.setUserData("arrow");
+                arrowBody.setLinearVelocity(directionX, directionY);
+                ResourceManager.getInstance().arrowSound.play();
+            }
+            if (pSceneTouchEvent.isActionDown() && fireballSelected && mp > 0){
+                mFireballSpecial = new AnimatedSprite(player.getX(), player.getY(), ResourceManager.getInstance().special_fireball_region, vbom);
+                if(pSceneTouchEvent.getX() > player.getX()) {
+                    mFireballSpecial.setX(player.getX()+player.getWidth()/2+mFireballSpecial.getWidth()+70);
+                }
+                if(pSceneTouchEvent.getX() < player.getX()) {
+                    mFireballSpecial.setX(player.getX()-player.getWidth()/2-mFireballSpecial.getWidth()-70);
+                }
+                if(pSceneTouchEvent.getY() > player.getY()) {
+                    mFireballSpecial.setY(player.getY() + player.getHeight() / 2 + mFireballSpecial.getHeight()+70);
+                }
+                if(pSceneTouchEvent.getY() < player.getY()) {
+                    mFireballSpecial.setY(player.getY() - player.getHeight() / 2 - mFireballSpecial.getHeight()-70);
+                }
+                attachChild(mFireballSpecial);
+                mFireballSpecial.setScale(3, 3);
+                mFireballSpecial.animate(20);
+                mp--;
+                mMp.setCurrentTileIndex(mp);
+                fireballSelected = false;
+                mFireballButton.setCurrentTileIndex(0);
+
+                float pValueX = pSceneTouchEvent.getX();
+
+                float pValueY = player.getY() - pSceneTouchEvent.getY();
+
+                float directionX = pValueX - mFireballSpecial.getX();
+                float directionY = (player.getY() - pValueY) - mFireballSpecial.getY();
+
+                float rotationAngle = (float) Math.atan2(directionY, directionX);
+
+                mFireballSpecial.setRotation(MathUtils.radToDeg(rotationAngle));
+
+                final FixtureDef objectFixtureDef = PhysicsFactory.createFixtureDef(1, 0.7f, 0.3f);
+                fireBody = PhysicsFactory.createBoxBody(mPhysicsWorld, mFireballSpecial, BodyDef.BodyType.DynamicBody, objectFixtureDef);
+                mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(mFireballSpecial, fireBody, true, true));
+                fireBody.setUserData("fireball");
+                fireBody.setLinearVelocity(directionX, directionY);
+                ResourceManager.getInstance().fireSound.play();
             }
             if (pSceneTouchEvent.isActionUp() && playerDrop) {
                 isAttacking = false;
@@ -279,11 +431,12 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
     }
     //Recharge Sprite Animation
     private void playDisableAttack() {
-        mRecharge.animate(40, 0, new AnimatedSprite.IAnimationListener() {@Override
-                                                                          public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
-            attackDisabled = false;
-            mRecharge.stopAnimation();
-        }
+        mRecharge.animate(40, 0, new AnimatedSprite.IAnimationListener() {
+            @Override
+            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                attackDisabled = false;
+                mRecharge.stopAnimation();
+            }
 
             @Override
             public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
@@ -301,7 +454,8 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
             @Override
             public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                                int pRemainingLoopCount, int pInitialLoopCount) {}
+                                                int pRemainingLoopCount, int pInitialLoopCount) {
+            }
         });
     }
 
@@ -340,7 +494,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         expText.setPosition(MainActivity.CAMERA_WIDTH - 190, 115);
         attachChild(expText);
 
-        mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "MP:", new TextOptions(HorizontalAlign.LEFT), vbom);
+        mpText = new Text(0, 0, ResourceManager.getInstance().hudNameFont, "AP:", new TextOptions(HorizontalAlign.LEFT), vbom);
         mpText.setPosition((MainActivity.CAMERA_WIDTH / 2) + 145, 40);
         attachChild(mpText);
 
@@ -365,12 +519,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
 
         //Create Store Button for StoreScene
-        mStore = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {@Override
-                                                                                                                                                          public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-            makeStoreScene();
-            setChildScene(mStoreScene, false, true, true);
-            return true;
-        }
+        mStore = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().store_region, vbom) {
+            @Override
+            public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+                makeStoreScene();
+                setChildScene(mStoreScene, false, true, true);
+                return true;
+            }
         };
         mStore.setScale(3, 3);
 
@@ -402,6 +557,26 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         detachChild(mStore);
         unregisterTouchArea(mStore);
 
+        if (selectedPlayer == 0){
+            //Create Shield button if player is warrior
+            mShieldButton = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().shield_region, vbom);
+            mShieldButton.setScale(3, 3);
+            mShieldButton.setCurrentTileIndex(0);
+            attachChild(mShieldButton);
+        } else if (selectedPlayer == 1){
+            //Create Arrow button if player is archer
+            mArrowButton = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().arrow_region, vbom);
+            mArrowButton.setScale(3, 3);
+            mArrowButton.setCurrentTileIndex(0);
+            attachChild(mArrowButton);
+        } else if (selectedPlayer == 2){
+            //Create Fireball button if player is mage
+            mFireballButton = new AnimatedSprite(MainActivity.CAMERA_WIDTH - 105, MainActivity.CAMERA_HEIGHT - 100, ResourceManager.getInstance().fireball_region, vbom);
+            mFireballButton.setScale(3, 3);
+            mFireballButton.setCurrentTileIndex(0);
+            attachChild(mFireballButton);
+        }
+
         //Set the actual position of sprites in onUpdate()
         mCharge = createAnimatedSprite(-100, -500, ResourceManager.getInstance().charge_region, vbom);
         mCharge.setScale(2.2f, 2.2f);
@@ -412,6 +587,11 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         mRecharge.setScale(2.2f, 2.2f);
         attachChild(mRecharge);
         mRecharge.animate(40);
+
+        mShieldSpecial = createAnimatedSprite(-100, -500, ResourceManager.getInstance().special_shield_region, vbom);
+        mShieldSpecial.setScale(3, 3);
+        attachChild(mShieldSpecial);
+        mShieldSpecial.animate(50);
     }
 
     private void addFloorItems() {
@@ -419,6 +599,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         enemyList = new ArrayList < > ();
         platformList = new ArrayList < > ();
         spikedPlatformList = new ArrayList < > ();
+        doorList = new ArrayList < > ();
         levelItems = new ArrayList < > ();
         int enemyNum = 0;
         int platNum = 0;
@@ -504,6 +685,13 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                 levelItems.add(coinList.get(coinNum));
                 coinNum++;
             }
+            /*if(enemyList.size() >= 1 && i == 11){
+                int X = (int)(Math.random() * MainActivity.CAMERA_WIDTH - 100);
+                int Y = MainActivity.CAMERA_WIDTH + 500;
+
+                doorList.add(new Coin(X, Y, ResourceManager.getInstance().door_region, vbom, mPhysicsWorld, this, "", ((int)2.5), ((int)2.5), 100));
+                levelItems.add(doorList.get(0));
+            }*/
         }
     }
 
@@ -829,28 +1017,235 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
 
     private ContactListener createContactListener() {
         ContactListener
-                contactListener = new ContactListener() {@Override
-                                                         public void beginContact(Contact contact) {
-            final Fixture x1 = contact.getFixtureA();
-            final Fixture x2 = contact.getFixtureB();
-            final Body body1 = x1.getBody();
-            final Body body2 = x2.getBody();
+                contactListener = new ContactListener() {
+            @Override
+            public void beginContact(Contact contact) {
+                final Fixture x1 = contact.getFixtureA();
+                final Fixture x2 = contact.getFixtureB();
+                final Body body1 = x1.getBody();
+                final Body body2 = x2.getBody();
 
-            //check if player and coin collide
-            for (int i = 0; i < coinList.size(); i++) {
-                String coinData = "coin" + i;
-                if (("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
-                    //collect coin and add it to gold amount
-                    destroyCoin(coinList.get(i));
-                    int randNum = Math.round((int)(Math.random() * 25));
-                    if (randNum == 0) {
-                        randNum = 1;
+                //check if player and coin collide
+                for (int i = 0; i < coinList.size(); i++) {
+                    String coinData = "coin" + i;
+                    if (("player".equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
+                        //collect coin and add it to gold amount
+                        destroyCoin(coinList.get(i));
+                        int randNum = Math.round((int)(Math.random() * 25));
+                        if (randNum == 0) {
+                            randNum = 1;
+                        }
+                        goldAmount = goldAmount + randNum;
+                        coinText.setText(String.valueOf(goldAmount));
                     }
-                    goldAmount = goldAmount + randNum;
-                    coinText.setText(String.valueOf(goldAmount));
+                }
+                //check if fireball and enemy collide
+                for (int i = 0; i < enemyList.size(); i++) {
+                    String batData = "bat" + i;
+                    String fireData = "fireball";
+                    if ((fireData.equals(body1.getUserData()) && batData.equals(body2.getUserData())) || (fireData.equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
+                        Log.d("fire", "fire hit");
+                        //kill enemy and add experience
+                        destroyEnemy(enemyList.get(i));
+                        //add experience and level up if necessary
+                        exp += 1;
+                        if (exp > level * level) {
+                            level++;
+                            levelText.setText("Level: " + String.valueOf(level));
+                            if (lives >= maxLives) {
+                                lives = maxLives;
+                            } else {
+                                lives++;
+                                mLives.setCurrentTileIndex(lives);
+                            }
+                            exp = 0;
+                        }
+                        expText.setText("Exp: " + String.valueOf(exp));
+                        //explosion
+                        mExplosion = createAnimatedSprite(enemyList.get(i).getX(), enemyList.get(i).getY(), ResourceManager.getInstance().explosion_region, vbom);
+                        attachChild(mExplosion);
+                        mExplosion.setScale(3, 3);
+                        mExplosion.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+
+                            @Override
+                            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                mExplosion.setVisible(false);
+                                detachChild(mExplosion);
+                                mExplosion.dispose();
+                            }
+
+                            @Override
+                            public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+                                mPhysicsWorld.destroyBody(fireBody);
+                                mFireballSpecial.detachSelf();
+                                mFireballSpecial.dispose();
+
+                            }
+
+                            @Override
+                            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+                                // TODO Auto-generated method stub
+
+                            }
+
+                            @Override
+                            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+
+                    }
+                }
+                //check if fireball and coin collide
+                for (int i = 0; i < coinList.size(); i++) {
+                    String coinData = "coin" + i;
+                    String fireData = "fireball";
+                    if ((fireData.equals(body1.getUserData()) && coinData.equals(body2.getUserData())) || (fireData.equals(body2.getUserData()) && coinData.equals(body1.getUserData()))) {
+                        Log.d("fire", "fire hit");
+
+                        //explosion
+                        mExplosion = createAnimatedSprite(coinList.get(i).getX(), coinList.get(i).getY(), ResourceManager.getInstance().explosion_region, vbom);
+                        attachChild(mExplosion);
+                        mExplosion.setScale(3, 3);
+                        mExplosion.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+
+                            @Override
+                            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                mExplosion.setVisible(false);
+                                detachChild(mExplosion);
+                                mExplosion.dispose();
+                            }@Override
+                             public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+                                mPhysicsWorld.destroyBody(fireBody);
+                                mFireballSpecial.detachSelf();
+                                mFireballSpecial.dispose();
+
+                            }
+
+                            @Override
+                            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+                                // TODO Auto-generated method stub
+
+                            }
+
+                            @Override
+                            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+
+                    }
+                }
+                //check if fireball and platform collide
+                for (int i = 0; i < platformList.size(); i++) {
+                    String platformData = "platform" + i;
+                    String fireData = "fireball";
+                    if ((fireData.equals(body1.getUserData()) && platformData.equals(body2.getUserData())) || (fireData.equals(body2.getUserData()) && platformData.equals(body1.getUserData()))) {
+                        Log.d("fire", "fire hit");
+                        //explosion
+                        mExplosion = createAnimatedSprite(platformList.get(i).getX(), platformList.get(i).getY(), ResourceManager.getInstance().explosion_region, vbom);
+                        attachChild(mExplosion);
+                        mExplosion.setScale(3, 3);
+                        mExplosion.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+
+                            @Override
+                            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                mExplosion.setVisible(false);
+                                detachChild(mExplosion);
+                                mExplosion.dispose();
+                            }
+
+                            @Override
+                            public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+                                mPhysicsWorld.destroyBody(fireBody);
+                                mFireballSpecial.detachSelf();
+                                mFireballSpecial.dispose();
+
+                            }
+
+                            @Override
+                            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+                                // TODO Auto-generated method stub
+
+                            }
+
+                            @Override
+                            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+
+                    }
+                }
+                //check if fireball and spikes collide
+                for (int i = 0; i < spikedPlatformList.size(); i++) {
+                    String spikedData = "spiked" + i;
+                    String fireData = "fireball";
+                    if ((fireData.equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || (fireData.equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
+                        Log.d("fire", "fire hit");
+                        //explosion
+                        mExplosion = createAnimatedSprite(spikedPlatformList.get(i).getX(), spikedPlatformList.get(i).getY(), ResourceManager.getInstance().explosion_region, vbom);
+                        attachChild(mExplosion);
+                        mExplosion.setScale(3, 3);
+                        mExplosion.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+
+                            @Override
+                            public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                mExplosion.setVisible(false);
+                                detachChild(mExplosion);
+                                mExplosion.dispose();
+                            }
+
+                            @Override
+                            public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
+                                mPhysicsWorld.destroyBody(fireBody);
+                                mFireballSpecial.detachSelf();
+                                mFireballSpecial.dispose();
+
+                            }
+
+                            @Override
+                            public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
+                                // TODO Auto-generated method stub
+
+                            }
+
+                            @Override
+                            public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+
+                    }
+                }
+                //check if arrow and enemy collide
+                for (int i = 0; i < enemyList.size(); i++) {
+                    String batData = "bat" + i;
+                    String arrowData = "arrow";
+                    if ((arrowData.equals(body1.getUserData()) && batData.equals(body2.getUserData())) || (arrowData.equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
+                        //kill enemy and add experience
+                        destroyEnemy(enemyList.get(i));
+                        //add experience and level up if necessary
+                        exp += 1;
+                        if (exp > level * level) {
+                            level++;
+                            levelText.setText("Level: " + String.valueOf(level));
+                            if (lives >= maxLives) {
+                                lives = maxLives;
+                            } else {
+                                lives++;
+                                mLives.setCurrentTileIndex(lives);
+                            }
+                            exp = 0;
+                        }
+                        expText.setText("Exp: " + String.valueOf(exp));
+                    }
                 }
             }
-        }
 
             @Override
             public void endContact(Contact contact) {
@@ -863,7 +1258,7 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                 for (int i = 0; i < enemyList.size(); i++) {
                     String batData = "bat" + i;
                     if (("player".equals(body1.getUserData()) && batData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && batData.equals(body1.getUserData()))) {
-                        if (isAttacking) {
+                        if (isAttacking || shieldOn) {
                             //kill enemy and add experience
                             destroyEnemy(enemyList.get(i));
                             isAttacking = false;
@@ -895,55 +1290,49 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                                     mBlood.dispose();
 
                                 }@Override
-                                 public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                                                int pInitialLoopCount) {
+                                 public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
                                     // TODO Auto-generated method stub
 
                                 }
 
                                 @Override
-                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                                                    int pOldFrameIndex, int pNewFrameIndex) {
+                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
                                     // TODO Auto-generated method stub
 
                                 }
 
                                 @Override
-                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                                                    int pRemainingLoopCount, int pInitialLoopCount) {
+                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                     // TODO Auto-generated method stub
 
                                 }
                             });
                         } else if (!isAttacking) {
                             if (lives != 0) {
-								/*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+                                player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
 
-                                @Override
-                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                    @Override
+                                    public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
                                         player.setCurrentTileIndex(0);
                                         player.stopAnimation();
-                                        }
-                                @Override
-                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                        int pInitialLoopCount) {
+                                    }
+                                    @Override
+                                    public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
-                                        }
+                                    }
 
-                                @Override
-                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                        int pOldFrameIndex, int pNewFrameIndex) {
+                                    @Override
+                                    public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
                                         // TODO Auto-generated method stub
 
-                                        }
+                                    }
 
-                                @Override
-                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                                    @Override
+                                    public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
-                                        }});*/
+                                    }});
 
                                 //play Hit sound depending on character selected from MainMenu Scene
                                 if (selectedPlayer == 0) {
@@ -971,35 +1360,32 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                     if (("player".equals(body1.getUserData()) && spikedData.equals(body2.getUserData())) || ("player".equals(body2.getUserData()) && spikedData.equals(body1.getUserData()))) {
                         if (player.getY() < spikedPlatformList.get(i).getY()) {
                             if (lives != 0) {
-								/*player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
+                                player.animate(75, 0, new AnimatedSprite.IAnimationListener() {
 
-                                @Override
-                                public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+                                    @Override
+                                    public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
                                         player.setCurrentTileIndex(0);
                                         player.stopAnimation();
-                                        }
+                                    }
 
-                                @Override
-                                public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
-                                        int pInitialLoopCount) {
+                                    @Override
+                                    public void onAnimationStarted(AnimatedSprite pAnimatedSprite, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
-                                        }
+                                    }
 
-                                @Override
-                                public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
-                                        int pOldFrameIndex, int pNewFrameIndex) {
+                                    @Override
+                                    public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite, int pOldFrameIndex, int pNewFrameIndex) {
                                         // TODO Auto-generated method stub
 
-                                        }
+                                    }
 
-                                @Override
-                                public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
-                                        int pRemainingLoopCount, int pInitialLoopCount) {
+                                    @Override
+                                    public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite, int pRemainingLoopCount, int pInitialLoopCount) {
                                         // TODO Auto-generated method stub
 
-                                        }
-                                        });*/
+                                    }
+                                });
                                 if (selectedPlayer == 0) {
                                     ResourceManager.getInstance().wHitSound.play();
                                 }
@@ -1054,6 +1440,20 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
         });
     }
 
+    private void destroyLevelItems(final Coin li) {
+        activity.runOnUpdateThread(new Runnable() {
+
+            @Override
+            public void run() {
+                //Remove Level Items Platforms
+                final Body body = li.body;
+                mPhysicsWorld.unregisterPhysicsConnector(mPhysicsWorld.getPhysicsConnectorManager().findPhysicsConnectorByShape(li));
+                mPhysicsWorld.destroyBody(body);
+                detachChild(li);
+                doorList.remove(li);
+            }
+        });
+    }
 
     private void destroySpikedPlatforms(final GameObject sp) {
         activity.runOnUpdateThread(new Runnable() {
@@ -1127,9 +1527,9 @@ public class GameScene extends BaseScene implements IOnSceneTouchListener, IAcce
                 destroySpikedPlatforms(spikedPlatformList.get(i));
             }
         }
-        if (levelItems.size() > 0) {
-            for (int i = 0; i < levelItems.size(); i++) {
-                //(levelItems.get(i));
+        if (doorList.size() > 0) {
+            for (int i = 0; i < doorList.size(); i++) {
+                destroyLevelItems(doorList.get(i));
             }
         }
 
